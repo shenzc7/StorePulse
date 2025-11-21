@@ -27,7 +27,11 @@ Before you begin, ensure you have the following installed:
 
 **macOS:**
 - Xcode Command Line Tools: `xcode-select --install`
-- Rust (for Tauri): Will be installed automatically via npm
+- Rust (for Tauri): **REQUIRED** - Install from [rustup.rs](https://rustup.rs/) or run:
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  source ~/.cargo/env
+  ```
 
 **Windows:**
 - Visual Studio Build Tools (for native modules)
