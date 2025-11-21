@@ -1,15 +1,15 @@
 {
-  "dataset": "/Users/shenzc/Desktop/projects/StorePulse/data/lite_sample.csv",
+  "dataset": "/Users/shenzc/Desktop/projects/StorePulse/data/samples/lite_sample.csv",
   "rows": 335,
   "feature_cols": [
-    "dow",
-    "is_weekend",
     "lag_1",
     "lag_2",
     "lag_7",
     "lag_14",
     "lag_21",
     "lag_30",
+    "dow",
+    "is_weekend",
     "is_holiday",
     "rolling_mean_7",
     "rolling_std_7",
@@ -30,16 +30,16 @@
     "type": "INGARCH"
   },
   "training_metrics": {
-    "smape": 25.206171728749872,
-    "mase": 0.029916298187926148,
-    "rmse": 33.95463039831808,
-    "ma7_smape": 18.419986264328355,
-    "naive_smape": 21.70169288470411
+    "smape": 11.984046642615368,
+    "mase": 0.03025106137269876,
+    "rmse": 19.0129595477699,
+    "ma7_smape": 11.646946308385782,
+    "naive_smape": 12.61199056500002
   },
   "quality_gate": {
     "applies": true,
     "threshold_pct": 0.0,
-    "lift_pct": -36.841425216279674,
+    "lift_pct": -2.8943237592404287,
     "passed": false
   },
   "backtest": {
