@@ -95,28 +95,18 @@ echo ""
 echo "✅ Verifying setup..."
 ./scripts/verify_setup.sh
 
-# Start the application
+# Fix Tauri version mismatch (ensure npm packages match Cargo.toml)
+echo ""
+echo "🔧 Fixing Tauri version compatibility..."
+cd src
+npm install @tauri-apps/api@2.0.0 @tauri-apps/cli@2.0.0 --save-exact
+cd ..
+
+# Start the application using dev.sh script
 echo ""
 echo "🎉 Setup complete! Starting StorePulse..."
 echo ""
-echo "Starting backend and frontend..."
-echo "Press Ctrl+C to stop"
-echo ""
-
-# Start backend in background
-source api_venv/bin/activate
-cd api
-uvicorn main:app --host 127.0.0.1 --port 9000 --reload &
-BACKEND_PID=$!
-cd ..
-
-# Wait a moment for backend to start
-sleep 3
-
-# Start frontend
-cd src
-npm run tauri-dev
-
-# Cleanup on exit
-trap "kill $BACKEND_PID 2>/dev/null" EXIT
+echo "Using dev.sh launcher..."
+chmod +x dev.sh
+./dev.sh
 
