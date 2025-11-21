@@ -45,10 +45,10 @@ class WhatIfRequest(BaseModel):
 class ScenarioResult(BaseModel):
     """Result of a single scenario analysis."""
     scenario_name: str
-    forecast_delta: List[Dict[str, float]]  # Daily deltas from baseline
-    impact_summary: Dict[str, float]  # Overall impact metrics
+    forecast_delta: List[Dict[str, Any]]  # Daily deltas from baseline (date strings, numeric values)
+    impact_summary: Dict[str, Any]  # Overall impact metrics (includes string values like scenario_strength)
     staffing_impact: Dict[str, int]  # Staffing changes by role
-    inventory_impact: List[Dict[str, int]]  # Top SKU changes
+    inventory_impact: List[Dict[str, Any]]  # Top SKU changes (includes string fields like sku, name, category)
 
 
 class ScenarioSaveRequest(BaseModel):
@@ -139,12 +139,15 @@ async def analyze_scenarios(request: WhatIfRequest) -> Dict[str, List[ScenarioRe
         results = []
 
         for scenario in request.scenarios:
+            # Convert Pydantic model to dict for forecast service
+            scenario_dict = scenario.model_dump() if hasattr(scenario, 'model_dump') else dict(scenario)
+            
             # Apply scenario modifications to features
             scenario_forecast = forecast_service.generate_scenario_forecast(
                 baseline_date=baseline_date,
                 horizon_days=horizon_days,
                 mode=mode,
-                scenario_config=scenario
+                scenario_config=scenario_dict
             )
 
             # Calculate deltas from baseline

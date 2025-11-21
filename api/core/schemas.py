@@ -4,6 +4,9 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, validator
 
+PROMO_TYPES = {"none", "bogo", "percent_off", "bundle", "flash", "other"}
+WEATHER_TYPES = {"sunny", "cloudy", "rainy", "storm", "humid", "normal", "unknown"}
+
 
 class LiteRecord(BaseModel):
     """Minimal record for Lite mode."""
@@ -23,19 +26,16 @@ class ProRecord(LiteRecord):
     local_events: Optional[str] = Field(default=None, max_length=120)
     open_hours: Optional[float] = Field(default=None, ge=0, le=24)
 
-    _promo_types = {"none", "bogo", "percent_off", "bundle", "flash", "other"}
-    _weather_types = {"sunny", "cloudy", "rainy", "storm", "humid", "normal", "unknown"}
-
     @validator("promo_type")
     def validate_promo(cls, value: Optional[str]) -> Optional[str]:
-        if value and value.lower() not in cls._promo_types:
-            allowed = ", ".join(sorted(cls._promo_types))
+        if value and value.lower() not in PROMO_TYPES:
+            allowed = ", ".join(sorted(PROMO_TYPES))
             raise ValueError(f"promo_type must be one of: {allowed}")
         return value
 
     @validator("weather")
     def validate_weather(cls, value: Optional[str]) -> Optional[str]:
-        if value and value.lower() not in cls._weather_types:
-            allowed = ", ".join(sorted(cls._weather_types))
+        if value and value.lower() not in WEATHER_TYPES:
+            allowed = ", ".join(sorted(WEATHER_TYPES))
             raise ValueError(f"weather must be one of: {allowed}")
         return value

@@ -20,7 +20,7 @@ npm --version
 ### macOS/Linux
 ```bash
 # 1. Clone repository
-git clone <your-repo-url>
+git clone https://github.com/shenzc7/StorePulse.git
 cd StorePulse
 
 # 2. Run bootstrap script
@@ -34,7 +34,7 @@ chmod +x scripts/bootstrap_env.sh
 ### Windows
 ```powershell
 # 1. Clone repository
-git clone <your-repo-url>
+git clone https://github.com/shenzc7/StorePulse.git
 cd StorePulse
 
 # 2. Run bootstrap script

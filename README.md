@@ -2,6 +2,130 @@
 
 "Know tomorrow's visits. Act today." StorePulse is a professional desktop application for retail forecasting that predicts store traffic patterns and provides actionable staffing and inventory recommendations. Built for retail managers who need data-driven insights to optimize operations and staffing decisions.
 
+## 🚀 Quick Start - Get Running in 5 Minutes
+
+### Step 1: Clone the Repository
+
+**Option A: Using GitHub Desktop (Easiest for Non-Developers)**
+1. Download [GitHub Desktop](https://desktop.github.com/)
+2. Open GitHub Desktop
+3. Click "File" → "Clone Repository"
+4. Go to "URL" tab
+5. Paste: `https://github.com/shenzc7/StorePulse.git`
+6. Choose where to save it
+7. Click "Clone"
+
+**Option B: Using Command Line**
+
+**macOS/Linux:**
+```bash
+git clone https://github.com/shenzc7/StorePulse.git
+cd StorePulse
+```
+
+**Windows (Command Prompt):**
+```cmd
+git clone https://github.com/shenzc7/StorePulse.git
+cd StorePulse
+```
+
+**Windows (PowerShell):**
+```powershell
+git clone https://github.com/shenzc7/StorePulse.git
+cd StorePulse
+```
+
+### Step 2: Install Prerequisites
+
+**You need these installed first:**
+
+1. **Python 3.11 or higher**
+   - Download from: https://www.python.org/downloads/
+   - During installation, check "Add Python to PATH"
+   - Verify: Open terminal/command prompt and type `python --version` (should show 3.11+)
+
+2. **Node.js 18 or higher**
+   - Download from: https://nodejs.org/
+   - This also installs npm automatically
+   - Verify: Type `node --version` (should show v18+)
+
+3. **Git** (if not already installed)
+   - macOS: Usually pre-installed, or get from https://git-scm.com/download/mac
+   - Windows: Download from https://git-scm.com/download/win
+   - Linux: `sudo apt-get install git` (Ubuntu/Debian)
+
+### Step 3: Run Automated Setup
+
+**macOS/Linux:**
+```bash
+# Make scripts executable
+chmod +x scripts/bootstrap_env.sh
+chmod +x dev.sh
+chmod +x start.sh
+
+# Run setup (this installs everything automatically)
+./scripts/bootstrap_env.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+# Run setup (this installs everything automatically)
+.\scripts\bootstrap_env.ps1
+```
+
+**What this does:**
+- ✅ Creates a Python virtual environment
+- ✅ Installs all Python packages
+- ✅ Installs all Node.js packages
+- ✅ Verifies everything is installed correctly
+
+**Time:** Takes 5-10 minutes depending on your internet speed
+
+### Step 4: Run the Application
+
+**macOS/Linux:**
+```bash
+./dev.sh
+```
+
+**Windows:**
+```powershell
+.\dev.sh
+```
+
+**What happens:**
+1. Backend API starts (you'll see "Backend ready")
+2. Frontend starts (you'll see "Vite ready")
+3. Desktop app opens automatically
+4. You're ready to use StorePulse!
+
+### First Time Using StorePulse
+
+1. **Upload Your Data**
+   - Click "Data" in the app
+   - Upload a CSV file with your store visit data
+   - Sample files are in `data/samples/` folder
+
+2. **Train the Model**
+   - Click "Train" in the app
+   - Click "Train Model" button
+   - Wait 1-2 minutes for training to complete
+
+3. **View Forecasts**
+   - Click "Forecast" to see predictions
+   - See 14-day forecasts with confidence intervals
+
+4. **Export Reports**
+   - Click "Reports" to generate PDF reports
+
+---
+
+## 📖 Need More Help?
+
+- **Having trouble?** See [Troubleshooting](#-troubleshooting) below
+- **Want detailed setup?** See [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md)
+- **Quick reference?** See [QUICKSTART.md](QUICKSTART.md)
+
 ## ✨ Key Features
 
 ### 🎯 **14-Day Visit Forecasts (Powered by NB-INGARCH)**
@@ -37,26 +161,14 @@
 - Your data stays on your computer
 - Fast performance with local processing
 
-## 🚀 Installation
+## 💻 System Requirements
 
-### System Requirements
-- **macOS**: 10.15 or later
-- **Windows**: 10 or later (64-bit)
+- **Operating System**: macOS 10.15+, Windows 10+, or Linux
 - **RAM**: 8GB minimum, 16GB recommended
 - **Storage**: 2GB free space
-
-### Quick Start
-1. **Download**: Get StorePulse from your IT department or download link
-2. **Install**: Double-click the installer file
-   - macOS: Open StorePulse.app
-   - Windows: Run StorePulse.exe
-3. **Launch**: Click the StorePulse icon on your desktop
-
-### First Time Setup
-1. **Upload Your Data**: Click "Data" and upload your historical visit data (CSV format)
-2. **Train Models**: Click "Train" to build forecasting models from your data
-3. **View Forecasts**: See 14-day predictions with staffing recommendations
-4. **Export Reports**: Generate PDF reports for your team
+- **Python**: 3.11 or higher
+- **Node.js**: 18 or higher
+- **Internet**: Required for initial setup (downloading dependencies)
 
 ## 📋 Data Format
 
@@ -79,33 +191,114 @@ event_date,visits,weather,promo_type
 ```
 Uploaders automatically convert Excel or JSON files into this structure before persisting them.
 
+## 🔧 Troubleshooting
+
+### Common Issues and Solutions
+
+**"git: command not found"**
+- **macOS/Linux**: Install Git from https://git-scm.com/downloads
+- **Windows**: Install Git from https://git-scm.com/download/win
+- After installing, restart your terminal/command prompt
+
+**"python: command not found" or "python3: command not found"**
+- Install Python from https://www.python.org/downloads/
+- **Important**: During installation, check "Add Python to PATH"
+- Restart your terminal after installation
+
+**"node: command not found"**
+- Install Node.js from https://nodejs.org/
+- Restart your terminal after installation
+
+**"Permission denied" (macOS/Linux)**
+```bash
+chmod +x scripts/*.sh
+chmod +x *.sh
+```
+
+**"Scripts cannot be loaded" (Windows)**
+```powershell
+# Run PowerShell as Administrator, then:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+**Port already in use**
+- **macOS/Linux**: 
+  ```bash
+  # Kill process on port 9000
+  lsof -ti:9000 | xargs kill -9
+  # Kill process on port 5173
+  lsof -ti:5173 | xargs kill -9
+  ```
+- **Windows**:
+  ```cmd
+  # Find and kill process on port 9000
+  netstat -ano | findstr :9000
+  taskkill /PID <PID_NUMBER> /F
+  
+  # Find and kill process on port 5173
+  netstat -ano | findstr :5173
+  taskkill /PID <PID_NUMBER> /F
+  ```
+
+**Dependencies won't install**
+```bash
+# Make sure virtual environment is activated
+# macOS/Linux:
+source api_venv/bin/activate
+
+# Windows:
+.\api_venv\Scripts\Activate.ps1
+
+# Then reinstall:
+pip install -r api/requirements.txt
+cd src
+npm install
+```
+
+**App won't start after setup**
+1. Make sure you're in the StorePulse directory: `cd StorePulse`
+2. Make sure virtual environment is activated (see above)
+3. Try running setup again: `./scripts/bootstrap_env.sh` (or `.\scripts\bootstrap_env.ps1` on Windows)
+
+**Still having issues?**
+- Check [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for detailed troubleshooting
+- Make sure all prerequisites are installed correctly
+- Verify Python and Node.js versions meet requirements
+
 ## 👨‍💻 For Developers
 
-**Want to contribute or run StorePulse locally?** 
+**Want to contribute or customize StorePulse?**
 
 - 🚀 **Quick Start**: See [QUICKSTART.md](QUICKSTART.md) for a 5-minute setup guide
 - 📖 **Full Guide**: Check out our comprehensive [Developer Setup Guide](DEVELOPER_SETUP.md)
+- 🔧 **API Documentation**: See [docs/API.md](docs/API.md)
 
-Quick start for developers:
+**Manual Setup (if automated setup fails):**
 ```bash
-# Clone the repository
-git clone <your-repo-url>
+# Clone repository
+git clone https://github.com/shenzc7/StorePulse.git
 cd StorePulse
 
-# Run automated setup (macOS/Linux)
-./scripts/bootstrap_env.sh
-
-# Or manual setup
+# Create Python virtual environment
 python3 -m venv api_venv
+
+# Activate virtual environment
+# macOS/Linux:
 source api_venv/bin/activate
+# Windows:
+.\api_venv\Scripts\Activate.ps1
+
+# Install Python dependencies
 pip install -r api/requirements.txt
-cd src && npm install && cd ..
+
+# Install frontend dependencies
+cd src
+npm install
+cd ..
 
 # Run the application
-./dev.sh
+./dev.sh  # or .\dev.sh on Windows
 ```
-
-See [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for detailed instructions, troubleshooting, and development workflow.
 
 ## 🛠️ Environment Setup
 
@@ -181,25 +374,59 @@ A: Retrain monthly or when you have significant new data (100+ new days).
 
 ### Support & Troubleshooting
 **Q: The app won't start**
-A: Check system requirements and ensure antivirus isn't blocking the application.
+A: 
+1. Make sure you've completed the setup steps above
+2. Check that Python and Node.js are installed correctly
+3. Try running `./dev.sh` again (or `.\dev.sh` on Windows)
+4. See [Troubleshooting](#-troubleshooting) section above
 
 **Q: Forecasts look wrong**
-A: Verify your data format and consider retraining with more recent data.
+A: Verify your data format and consider retraining with more recent data. Make sure your CSV has the required columns.
 
 **Q: Need help with data preparation?**
-A: Contact your IT team or use the sample data templates provided.
+A: Check the sample files in `data/samples/` folder. They show the correct format.
 
-## 📞 Support
+**Q: Can't clone the repository**
+A: 
+- Make sure Git is installed (see Prerequisites above)
+- Try using GitHub Desktop instead (easier for beginners)
+- Check your internet connection
 
-### Getting Help
-- **Documentation**: Check the User Manual (User_Manual.pdf) for detailed instructions
-- **IT Support**: Contact your IT department for technical issues
-- **Training**: Request training sessions for your team
+**Q: Setup script fails**
+A:
+- Make sure Python 3.11+ and Node.js 18+ are installed
+- Check that you have internet connection (needed to download packages)
+- Try running the manual setup steps instead
+
+## 📞 Getting Help
+
+### Documentation
+- **User Manual**: See [docs/User_Manual.md](docs/User_Manual.md) for detailed usage instructions
+- **API Documentation**: See [docs/API.md](docs/API.md) for API details
+- **Developer Guide**: See [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for development setup
+
+### Quick Links
+- **Repository**: https://github.com/shenzc7/StorePulse
+- **Issues**: If you find a bug, please open an issue on GitHub
+- **Questions**: Check the [Troubleshooting](#-troubleshooting) section above first
 
 ### Version Information
 - **Current Version**: StorePulse v1.0.1
 - **Release Date**: October 2025
 - **Compatibility**: macOS 10.15+, Windows 10+
+
+---
+
+## 📝 Summary
+
+**To get started:**
+1. ✅ Install Python 3.11+ and Node.js 18+
+2. ✅ Clone: `git clone https://github.com/shenzc7/StorePulse.git`
+3. ✅ Setup: `./scripts/bootstrap_env.sh` (or `.\scripts\bootstrap_env.ps1` on Windows)
+4. ✅ Run: `./dev.sh` (or `.\dev.sh` on Windows)
+5. ✅ Use the app!
+
+**That's it!** The app will open automatically and you can start uploading data and generating forecasts.
 
 ---
 
