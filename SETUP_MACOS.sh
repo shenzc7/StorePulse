@@ -108,7 +108,7 @@ pip install -r api/requirements.txt
 echo ""
 echo "📦 Installing Node.js dependencies..."
 cd src
-npm install
+npm install --legacy-peer-deps
 cd ..
 
 # Verify setup
