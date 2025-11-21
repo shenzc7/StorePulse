@@ -25,13 +25,31 @@ Before you begin, ensure you have the following installed:
 
 ### Platform-Specific Requirements
 
-**macOS:**
+**macOS (Automated Setup - RECOMMENDED):**
+
+Use the one-line installer that handles everything automatically:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"
+```
+
+**✅ This installer automatically:**
+- Installs Homebrew, Python 3.13, Node.js 20, Rust
+- Configures PATH and PYTHONPATH correctly
+- Fixes Tauri version mismatches
+- Sets up the entire development environment
+- Starts the application
+
+See [QUICK_INSTALL_MACOS.md](QUICK_INSTALL_MACOS.md) for troubleshooting.
+
+**macOS (Manual Setup):**
 - Xcode Command Line Tools: `xcode-select --install`
 - Rust (for Tauri): **REQUIRED** - Install from [rustup.rs](https://rustup.rs/) or run:
   ```bash
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
   source ~/.cargo/env
   ```
+- **Important**: Export PYTHONPATH: `export PYTHONPATH="$(pwd):$PYTHONPATH"`
 
 **Windows:**
 - Visual Studio Build Tools (for native modules)

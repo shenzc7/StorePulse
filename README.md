@@ -4,7 +4,7 @@
 
 ## 🚀 Quick Start - Get Running in 5 Minutes
 
-### 🍎 macOS - One Command Setup (Easiest!)
+### 🍎 macOS - One Command Setup (Easiest!) ⚡
 
 **Copy and paste this single command into your terminal:**
 
@@ -16,11 +16,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/
 - ✅ Install Homebrew (if needed)
 - ✅ Install Python 3.13, Node.js 20, Git, and Rust
 - ✅ Clone the StorePulse repository
-- ✅ Install all Python and Node.js dependencies
+- ✅ Install all Python and Node.js dependencies (with proper version locking)
+- ✅ Configure Python paths automatically
 - ✅ Verify your setup
 - ✅ Start the application automatically
 
 **Time:** 10-15 minutes (depending on internet speed)
+
+> **🎉 NEW**: The macOS installer has been completely fixed! It now resolves Python import errors, Tauri version mismatches, and Node.js PATH issues automatically. See [QUICK_INSTALL_MACOS.md](QUICK_INSTALL_MACOS.md) for details.
 
 ---
 
@@ -144,9 +147,11 @@ chmod +x start.sh
 
 ## 📖 Need More Help?
 
+- **macOS Install Issues?** See [QUICK_INSTALL_MACOS.md](QUICK_INSTALL_MACOS.md) for the fixed installer
 - **Having trouble?** See [Troubleshooting](#-troubleshooting) below
 - **Want detailed setup?** See [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md)
 - **Quick reference?** See [QUICKSTART.md](QUICKSTART.md)
+- **What was fixed?** See [MACOS_SETUP_FIXES.md](MACOS_SETUP_FIXES.md) for technical details
 
 ## ✨ Key Features
 
@@ -324,9 +329,9 @@ cd ..
 
 ## 🛠️ Developer Setup
 
-### macOS - Automated Setup (Recommended)
+### macOS - Automated Setup (Recommended) ⚡
 
-**One command to install everything:**
+**One command to install everything (FIXED & TESTED):**
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"
@@ -338,8 +343,17 @@ This installs:
 - Node.js 20
 - Rust/Cargo (required for Tauri)
 - Git
-- All project dependencies
+- All project dependencies (with automatic version fixing)
+- Configures PYTHONPATH and environment variables
 - Starts the application
+
+**Recent Fixes (Nov 2025):**
+- ✅ Fixed Python import errors
+- ✅ Fixed Tauri version mismatches (2.0.0 lock)
+- ✅ Fixed Node.js PATH configuration
+- ✅ Added comprehensive error handling
+
+See [QUICK_INSTALL_MACOS.md](QUICK_INSTALL_MACOS.md) for more details.
 
 ### Manual Setup
 

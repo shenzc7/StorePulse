@@ -16,6 +16,7 @@ pkill -f "node.*vite" 2>/dev/null || true
 sleep 1
 
 cd "$(dirname "$0")"
+PROJECT_ROOT="$(pwd)"
 
 # Start backend
 echo "🖥️  Starting backend on port 9000..."
@@ -25,6 +26,7 @@ if [ ! -d "api_venv" ]; then
 fi
 
 source api_venv/bin/activate
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 nohup uvicorn api.main:app --host 127.0.0.1 --port 9000 --reload > /tmp/storepulse-backend.log 2>&1 &
 BACKEND_PID=$!
 

@@ -19,6 +19,7 @@ sleep 1
 
 # Navigate to project root
 cd "$(dirname "$0")"
+PROJECT_ROOT="$(pwd)"
 
 # Check virtual environment
 if [ ! -d "api_venv" ]; then
@@ -30,6 +31,7 @@ fi
 # Start backend
 echo "🖥️  Starting backend API..."
 source api_venv/bin/activate
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 nohup uvicorn api.main:app --host 127.0.0.1 --port 9000 > /tmp/storepulse-backend.log 2>&1 &
 BACKEND_PID=$!
 echo "   Backend PID: $BACKEND_PID"

@@ -17,7 +17,15 @@ npm --version
 
 ## Installation
 
-### macOS/Linux
+### macOS - One-Line Install (Recommended) ⚡
+```bash
+# This command does EVERYTHING - just copy and paste!
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"
+```
+
+**✅ FIXED**: Resolves Python imports, Tauri versions, and Node.js PATH automatically!
+
+### macOS/Linux - Manual Setup
 ```bash
 # 1. Clone repository
 git clone https://github.com/shenzc7/StorePulse.git
@@ -100,9 +108,11 @@ npm install
 
 ## Need More Help?
 
+- 🍎 macOS Install Guide: [QUICK_INSTALL_MACOS.md](QUICK_INSTALL_MACOS.md)
 - 📖 Full guide: [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md)
 - 📚 User manual: [docs/User_Manual.md](docs/User_Manual.md)
 - 🔧 API docs: [docs/API.md](docs/API.md)
+- 🐛 What was fixed: [MACOS_SETUP_FIXES.md](MACOS_SETUP_FIXES.md)
 
 ---
 
