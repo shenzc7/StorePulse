@@ -104,6 +104,19 @@ echo "📦 Installing Python dependencies..."
 pip install --upgrade pip
 pip install -r api/requirements.txt
 
+# Fix Tauri version in package.json BEFORE installing (prevent version mismatch)
+echo ""
+echo "🔧 Ensuring Tauri version compatibility..."
+cd src
+# Update package.json to use exact versions (not ^)
+if [ -f "package.json" ]; then
+    # Use sed to replace ^2.0.0 with 2.0.0 for Tauri packages
+    sed -i.bak 's/"@tauri-apps\/api": "\^2\.0\.0"/"@tauri-apps\/api": "2.0.0"/g' package.json
+    sed -i.bak 's/"@tauri-apps\/cli": "\^2\.0\.0"/"@tauri-apps\/cli": "2.0.0"/g' package.json
+    rm -f package.json.bak
+fi
+cd ..
+
 # Install Node.js dependencies
 echo ""
 echo "📦 Installing Node.js dependencies..."
@@ -115,13 +128,6 @@ cd ..
 echo ""
 echo "✅ Verifying setup..."
 ./scripts/verify_setup.sh
-
-# Fix Tauri version mismatch (ensure npm packages match Cargo.toml)
-echo ""
-echo "🔧 Fixing Tauri version compatibility..."
-cd src
-npm install @tauri-apps/api@2.0.0 @tauri-apps/cli@2.0.0 --save-exact
-cd ..
 
 # Start the application using dev.sh script
 echo ""
