@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-surface-100 font-sans text-ink-900 antialiased;
+    min-height: 100vh;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar - Premium minimal design */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Typography enhancements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  /* Remove number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  /* Premium Card Styles */
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-border transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    @apply shadow-md border-border-strong;
+  }
+
+  /* Premium Button Styles */
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm;
+    @apply bg-primary-600 text-white shadow-sm transition-all duration-200;
+    @apply hover:bg-primary-700 hover:shadow-md active:scale-[0.98];
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary-600;
+  }
+
+  .btn-secondary {
+    @apply relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm;
+    @apply bg-white text-ink-900 border border-border shadow-sm transition-all duration-200;
+    @apply hover:bg-surface-100 hover:border-border-strong hover:shadow active:scale-[0.98];
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply relative inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm;
+    @apply text-ink-700 transition-all duration-200;
+    @apply hover:bg-surface-200 active:scale-[0.98];
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* Premium Input Styles */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl border border-border bg-white text-ink-900 placeholder-ink-400;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+    @apply disabled:bg-surface-200 disabled:cursor-not-allowed;
+  }
+
+  /* Badge Styles */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-700 border border-primary-200;
+  }
+
+  .badge-success {
+    @apply badge bg-accent-100 text-accent-700 border border-accent-200;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-100 text-warning-700 border border-warning-200;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-100 text-danger-700 border border-danger-200;
+  }
+
+  .badge-neutral {
+    @apply badge bg-surface-200 text-ink-700 border border-border;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply bg-white rounded-2xl p-6 border border-border shadow-sm;
+    @apply transition-all duration-200 hover:shadow-md hover:border-border-strong;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  /* Section Header */
+  .section-header {
+    @apply mb-6;
+  }
+
+  .section-title {
+    @apply text-2xl font-semibold text-ink-900 mb-1;
+  }
+
+  .section-description {
+    @apply text-sm text-ink-600;
+  }
+
+  /* Table Styles */
+  .table {
+    @apply w-full border-collapse;
+  }
+
+  .table thead {
+    @apply bg-surface-100 border-b border-border;
+  }
+
+  .table th {
+    @apply px-6 py-3 text-left text-xs font-medium text-ink-700 uppercase tracking-wider;
+  }
+
+  .table td {
+    @apply px-6 py-4 text-sm text-ink-900 border-b border-border;
+  }
+
+  .table tbody tr:hover {
+    @apply bg-surface-50;
+  }
+}

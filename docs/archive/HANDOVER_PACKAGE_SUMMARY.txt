@@ -1,0 +1,30 @@
+StorePulse v1.0.0 - Handover Package Summary
+===========================================
+
+Package: StorePulse_v1.0.0_Handover_20251001_144839.tar.gz
+Created: Wed Oct  1 15:06:23 IST 2025
+Status: INCOMPLETE
+Size: 3.0G
+SHA-256: 25889e3f1d42bcbc5d48061a541d2c14836af528ccea09f77d0e060893d05852
+
+Location: /tmp/StorePulse_v1.0.0_Handover_20251001_144839.tar.gz
+
+VERIFICATION:
+  Checksum: shasum -a 256 /tmp/StorePulse_v1.0.0_Handover_20251001_144839.tar.gz
+  Extract: tar -xzf StorePulse_v1.0.0_Handover_20251001_144839.tar.gz
+
+DELIVERY CHECKLIST:
+  [ ] Archive created and verified
+  [ ] Checksums validated
+  [ ] Documentation complete
+  [ ] Model artifacts included
+  [ ] Sample data included
+  [ ] Installation tested on clean system
+  
+Transfer Instructions:
+  1. Copy /tmp/StorePulse_v1.0.0_Handover_20251001_144839.tar.gz to delivery location
+  2. Provide SHA-256 checksum to client: 25889e3f1d42bcbc5d48061a541d2c14836af528ccea09f77d0e060893d05852
+  3. Client verifies: shasum -a 256 StorePulse_v1.0.0_Handover_20251001_144839.tar.gz
+  4. Client extracts and follows QUICK_START.txt
+
+Generated: Wed Oct  1 15:06:23 IST 2025

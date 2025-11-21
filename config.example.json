@@ -1,0 +1,54 @@
+{
+  "app": {
+    "name": "StorePulse",
+    "version": "1.0.0",
+    "environment": "production"
+  },
+  "api": {
+    "host": "localhost",
+    "port": 8000,
+    "cors_origins": ["tauri://localhost"],
+    "timeout_seconds": 60
+  },
+  "database": {
+    "url": "sqlite:///./data/storepulse.db",
+    "echo": false,
+    "pool_size": 5
+  },
+  "models": {
+    "artifacts_dir": "./ml/artifacts",
+    "default_mode": "lite",
+    "supported_modes": ["lite", "pro"],
+    "training": {
+      "max_samples": 10000,
+      "min_samples_lite": 60,
+      "min_samples_pro": 90,
+      "timeout_seconds": 300
+    }
+  },
+  "forecasting": {
+    "default_days": 14,
+    "max_days": 30,
+    "confidence_levels": [0.1, 0.5, 0.9],
+    "enable_caching": true,
+    "cache_ttl_seconds": 3600
+  },
+  "reports": {
+    "output_dir": "./reports",
+    "formats": ["pdf", "csv", "json"],
+    "include_charts": true
+  },
+  "quality_gates": {
+    "lite_vs_ma7_improvement_pct": 8.0,
+    "pro_vs_lite_improvement_pct": 10.0,
+    "calibration_coverage_min": 0.90,
+    "cold_start_max_ms": 200
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "./logs/storepulse.log",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "max_bytes": 10485760,
+    "backup_count": 5
+  }
+}

@@ -1,0 +1,44 @@
+**[00:00 OPEN]** Presenter: "Welcome to StorePulse, the offline forecaster that helps us know tomorrow's visits and act today. StorePulse.app is already running via ./scripts/dev_run.sh, so both the Tauri shell and FastAPI backend are live."
+  Callout: Glance at the StatusDock to confirm it reads `API • Local • SQLite`.
+
+**[00:20 DATA LITE]** Presenter: "Lite mode proves we only need a simple store diary." 
+  Click: Tab "Data".
+  Click: Button "Load Sample (lite_sample.csv)".
+  Narrate: "We're writing just date and visits pairs into the local SQLite database - no cloud sync required."
+  ELI5 aside: "Think of this like our paper visit log, only tidier."
+
+**[00:45 TRAIN LITE]** Presenter: "Time to teach the model." 
+  Click: Tab "Train" (toggle should default to "Lite").
+  Click: Button "Start Training".
+  Narrate: "Watch the progress rail march through lag prep, NB-INGARCH fitting, volatility calibration, and coverage validation over server-sent events."
+  Fallback if SSE stalls: "If the progress bar freezes, say: 'Looks like the offline job kept running but the stream paused - I'll tap Refresh, and StorePulse will replay the steps once the connection resumes.'" (Click the Train tab header to refresh.)
+
+**[01:20 QUALITY GATE]** Presenter: "The Lite quality gates just lit up." 
+  Point: QA toast citing ">=8% sMAPE gain vs MA7".
+  Narrate: "Every build blocks if Lite slips under that, exactly as `ABSTRACT.md` mandates."
+
+**[01:35 TRAIN PRO]** Presenter: "Now let's layer in more context." 
+  Toggle: Switch to "Pro (promo, weather, paydays)".
+  Click: Button "Start Training".
+  Narrate: "We're adding sales, conversion, promo_type, price_change, weather, paydays, school_breaks, local_events, and open_hours so the NB-INGARCH engine can weight richer context automatically."
+  Fallback if SSE stalls: "If the stream slows here, say: 'StorePulse keeps crunching offline; I'll reopen the Train tab, and the StatusDock heartbeat will pick up where it left off.'"
+
+**[02:05 FORECAST]** Presenter: "Forecasts are ready." 
+  Click: Tab "Forecast".
+  Select: Dropdown "Store" -> "Downtown Flagship".
+  Hover: Band chart to surface P10 / P50 / P90.
+  Narrate: "These bands come from the NB-INGARCH Negative Binomial model, and inductive calibration locks coverage between 80% and 95%."
+  ELI5 aside: "It's like rolling a handful of dice so managers see chill, normal, and rush-day crowds."
+
+**[02:30 ACTIONS]** Presenter: "Decisions drive the value." 
+  Scroll: ActionCard list.
+  Read: "Shift 1 - add two associates Saturday at 10 AM; SKU - restock 18 promo bundles."
+  Mention: "Lite sets the baseline; Pro tweaks shifts when promotions spike."
+
+**[02:45 EXPORT]** Presenter: "Let's hand the plan to the floor lead." 
+  Click: Button "Export One-Pager".
+  Narrate: "The PDF lands in `reports/exports/visit-plan-downtown.pdf`, ready for WhatsApp or Teams."
+
+**[03:00 CLOSE]** Presenter: "StorePulse runs fully offline, nails every quality gate, and gives frontline teams a calm copilot. Next we'll jump into the Lab page to try what-if scenarios and log notes in `DECISIONS.md`."
+
+**Elevator Pitch (30s)** Presenter: "StorePulse is an offline-first desktop forecaster that turns 14 days of store visit predictions into shift schedules and SKU actions. Lite mode learns from just date and visits. Pro mode folds in promotions, weather, and local events with the NB-INGARCH engine. Built-in calibration keeps P10/P50/P90 honest, and everything exports to `reports/exports/` for quick sharing. It's the fastest path to knowing tomorrow's visits and acting today - without ever touching the cloud."

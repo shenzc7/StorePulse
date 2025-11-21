@@ -1,0 +1,183 @@
+# StorePulse Demo Script - 3-Minute Walkthrough
+
+## OVERVIEW
+**Goal:** Demonstrate complete StorePulse workflow in 3 minutes
+**Audience:** Retail executives and operations managers
+**Setup:** Pre-loaded with sample data, models pre-trained
+**Timing:** Exactly 180 seconds (3 minutes)
+
+---
+
+## TIMING BREAKDOWN
+
+### 0:00 - 0:30 (30 sec) | LAUNCH & INTRODUCTION
+**"Let's see StorePulse in action. I'll walk you through the complete forecasting process in just 3 minutes."**
+
+[LAUNCH APPLICATION]
+- Click StorePulse icon on desktop
+- Show clean, professional interface loading
+- Highlight status indicators: "API • Local • SQLite"
+
+**Key Message:** "StorePulse works completely offline - your data never leaves your computer."
+
+---
+
+### 0:30 - 0:45 (15 sec) | HOME DASHBOARD
+**"Here's what StorePulse shows when you first open it."**
+
+[NAVIGATE HOME PAGE]
+- Show AccuracyMeter with current model performance
+- Display StatusDock with system health
+- Highlight ActionCard for key actions
+
+**Key Message:** "Real-time dashboard shows model accuracy and system status."
+
+---
+
+### 0:45 - 1:15 (30 sec) | DATA UPLOAD
+**"First, we upload your historical visit data. StorePulse accepts standard CSV files."**
+
+[NAVIGATE TO DATA PAGE]
+- Click "Data" in navigation
+- Show upload interface with drag-and-drop area
+- Demonstrate file selection (pre-prepared sample file)
+
+[SHOW DATA VALIDATION]
+- Display automatic column detection
+- Show data preview with validation results
+- Highlight "365 records loaded successfully"
+
+**Key Message:** "Flexible data import handles your existing store formats automatically."
+
+---
+
+### 1:15 - 1:45 (30 sec) | MODEL TRAINING
+**"Now we train the forecasting models on your data. This usually takes 5-15 minutes, but watch how it works."**
+
+[NAVIGATE TO TRAIN PAGE]
+- Click "Train" in navigation
+- Show training configuration options
+- Select "Quick Demo" mode for speed
+
+[START TRAINING - SHOW PROGRESS]
+- Click "Start Training" button
+- Demonstrate live progress updates
+- Show SSE progress streaming: "Loading data... Training model... Validating..."
+
+**Key Message:** "Advanced ML analyzes your patterns to build accurate forecasting models."
+
+---
+
+### 1:45 - 2:15 (30 sec) | VIEW FORECASTS
+**"Here's the result - 14-day visit forecasts with business recommendations."**
+
+[NAVIGATE TO FORECAST PAGE]
+- Click "Forecast" in navigation (or auto-navigate after training)
+- Show forecast chart with P10/P50/P90 bands
+- Highlight prediction intervals and confidence levels
+
+[SHOW BUSINESS RECOMMENDATIONS]
+- Display staffing suggestions: "Schedule 4 staff for peak days"
+- Show inventory alerts: "Monitor dairy products - high demand expected"
+- Demonstrate uncertainty bands for decision-making
+
+**Key Message:** "P10/P50/P90 bands help you plan for best case, most likely, and worst case scenarios."
+
+---
+
+### 2:15 - 2:45 (30 sec) | WHAT-IF SCENARIOS
+**"StorePulse lets you test business scenarios before implementation."**
+
+[NAVIGATE TO LAB PAGE]
+- Click "Lab" in navigation
+- Show scenario creation interface
+- Create "Holiday Promotion" scenario
+
+[COMPARE SCENARIOS]
+- Show baseline vs. scenario forecasts side-by-side
+- Display impact analysis: "+25% visits expected"
+- Highlight staffing and inventory impacts
+
+**Key Message:** "Test promotions, weather changes, or competitive scenarios before deciding."
+
+---
+
+### 2:45 - 3:00 (15 sec) | EXPORT REPORTS
+**"Finally, generate professional reports for your team."**
+
+[NAVIGATE TO REPORTS PAGE]
+- Click "Reports" in navigation
+- Show export options and PDF generation
+- Demonstrate report download
+
+[SHOW REPORT PREVIEW]
+- Display executive-ready PDF format
+- Highlight charts, metrics, and recommendations
+
+**Key Message:** "Export professional PDFs with all forecasts and business recommendations."
+
+---
+
+## TOTAL TIME: 3:00 (180 seconds)
+
+## DEMO PREPARATION CHECKLIST
+
+### Pre-Demo Setup
+- [ ] StorePulse installed and tested on demo machine
+- [ ] Sample data file prepared (lite_sample.csv)
+- [ ] Models pre-trained to skip training time
+- [ ] All pages functional and data loaded
+- [ ] Demo machine has good performance (SSD, 16GB RAM)
+
+### Demo Flow Verification
+- [ ] Launch time < 10 seconds
+- [ ] Data upload completes in < 5 seconds
+- [ ] Forecasts pre-generated (skip training)
+- [ ] What-if scenarios pre-configured
+- [ ] PDF reports pre-generated
+
+### Contingency Plans
+- [ ] Backup demo machine ready
+- [ ] Screenshots available if live demo fails
+- [ ] Pre-recorded video option
+- [ ] Static slides for technical difficulties
+
+## KEY MESSAGES TO EMPHASIZE
+
+1. **"Works completely offline - your data stays secure on your computer"**
+2. **"Advanced ML provides uncertainty bands for risk-aware planning"**
+3. **"Reduces staffing costs by 15-25% through data-driven scheduling"**
+4. **"Tests business scenarios before you implement them"**
+5. **"Professional reports ready for executive presentation"**
+
+## DEMO MACHINE SPECIFICATIONS
+
+- **OS:** macOS 12.0+ or Windows 11
+- **RAM:** 16GB minimum
+- **Storage:** 500GB SSD
+- **Display:** 1920x1080 minimum
+- **Network:** None required (offline-first)
+
+## SUCCESS METRICS
+
+- Demo completes in exactly 3 minutes
+- All major features demonstrated
+- Audience sees real forecasts and recommendations
+- Questions focus on business value, not technical details
+- Clear next steps established
+
+---
+
+## SAMPLE DIALOGUE
+
+**Opening:** "I'm going to show you how StorePulse transforms retail operations in just 3 minutes."
+
+**During Demo:** "Notice how the uncertainty bands help you plan for different scenarios..."
+
+**Benefits:** "This means you can reduce staffing costs by 15-25% while improving customer service."
+
+**Close:** "StorePulse gives you the confidence to know tomorrow's visits today. Questions?"
+
+---
+
+*Practice this demo script until it flows naturally at exactly 3 minutes. Focus on business value over technical details.*

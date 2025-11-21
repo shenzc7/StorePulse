@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.tauri.app/config/2.0.0-beta.16",
+  "productName": "StorePulse",
+  "version": "1.0.0",
+  "identifier": "com.storepulse.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "StorePulse",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "url": "http://localhost:5173"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

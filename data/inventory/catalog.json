@@ -1,0 +1,8 @@
+[
+  {"sku": "SP-001", "name": "Premium Coffee Pack", "category": "beverages", "daily_capacity": 120},
+  {"sku": "SP-002", "name": "Assorted Snacks Bundle", "category": "snacks", "daily_capacity": 90},
+  {"sku": "SP-003", "name": "Wellness Essentials Kit", "category": "personal_care", "daily_capacity": 60},
+  {"sku": "SP-004", "name": "Household Staples Combo", "category": "groceries", "daily_capacity": 140},
+  {"sku": "SP-005", "name": "Ready-to-Eat Meal Pack", "category": "fresh_food", "daily_capacity": 75},
+  {"sku": "SP-006", "name": "Festive Gifting Box", "category": "seasonal", "daily_capacity": 40}
+]

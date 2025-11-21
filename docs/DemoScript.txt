@@ -1,0 +1,41 @@
+0:00 — Presenter: “Welcome to StorePulse, the offline visit forecaster that helps us know tomorrow’s visits and act today. I’ve already bootstrapped using ./scripts/bootstrap_env.sh and I’m running ./scripts/dev_run.sh so both the FastAPI backend and the Tauri desktop shell are live.”
+    Click: Home tab → Confirm status dock shows “API • Local • SQLite”.
+
+0:25 — Presenter: “First let’s show how little data Lite mode needs.”
+    Click: Data tab → Button “Load Sample (lite_sample.csv)”.
+    Narrate: “These are just date + visits pairs inside our local SQLite database—no cloud sync.”
+    ELI5 aside: “Think of this table as our store diary with doodles of how many shoppers dropped by.”
+
+0:55 — Presenter: “We’re ready to teach the model.”
+    Click: Train tab → Toggle stays on “Lite”.
+    Click: Button “Start Training”.
+    Narrate: “The `/api/train` endpoint is streaming progress; watch the progress rail update lag prep, NB-INGARCH fitting, volatility calibration, and coverage checks.”
+    Mention: “Artifacts land in `reports/forecasts/` and reliability charts in `reports/lite_reliability.png`.”
+
+1:25 — Presenter: “Training cleared all quality gates.”
+    Point: QA Toast highlighting ≥8% sMAPE gain vs MA7 baseline.
+    Narrate: “We block builds if Lite ever slips under that, exactly as `ABSTRACT.md` mandates.”
+
+1:40 — Presenter: “Now let’s flip on Pro mode so stakeholders feel the uplift.”
+    Click: Toggle “Pro (promo, weather, paydays)”.
+    Click: Button “Start Training” again.
+    Narrate: “We just added richer context—sales, conversion, promo_type, price_change, weather, paydays, school_breaks, local_events, open_hours. The NB-INGARCH engine automatically weights these drivers for sharper weekend coverage.”
+    Mention: “Check the console log for the `reports/exports/` stamp when the Pro signals push the uplift guidance.”
+
+2:05 — Presenter: “Time to review the forecast.”
+    Click: Forecast tab → Select store “Downtown Flagship”.
+    Hover: Band chart to show P10 / P50 / P90.
+    Narrate: “These bands are derived from the NB-INGARCH dispersion parameter, calibrated so 80–95% of actuals land inside.”
+    ELI5 aside: “It’s like we rolled a fistful of dice so managers see chill, normal, and rush-day crowds.”
+
+2:25 — Presenter: “Decisions are what matter.”
+    Scroll: Action cards.
+    Read: “Shift 1 — add 2 associates on Saturday 10 AM; SKU: restock 18 promo bundles.”
+    Mention: “Lite delivers the baseline; Pro tweaks quantities when promos spike.”
+
+2:40 — Presenter: “Let’s export the plan.”
+    Click: Button “Export One-Pager”.
+    Narrate: “The PDF lands beside `reports/exports/visit-plan-downtown.pdf`, ready to WhatsApp to the floor lead.”
+
+2:55 — Presenter: “Wrap-up.”
+    Summary: “StorePulse runs fully offline, hits every quality gate, and gives frontline teams a friendly copilot. Next up we’ll try the Lab page to experiment with scenarios and log QA notes in DECISIONS.md.”

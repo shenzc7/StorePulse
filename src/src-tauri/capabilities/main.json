@@ -1,0 +1,10 @@
+{
+  "identifier": "main-window-capability",
+  "description": "Capability for the main window to access localhost dev server",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ],
+  "local": true
+}
+

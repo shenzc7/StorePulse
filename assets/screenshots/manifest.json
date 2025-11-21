@@ -1,0 +1,121 @@
+{
+  "generated": "2025-09-30T11:07:28.941843",
+  "status": "partial_manual_generation",
+  "note": "Screenshots require Tauri app launch - structure prepared for future automation",
+  "screenshots": [
+    {
+      "filename": "01_home_page.png",
+      "description": "Initial application load showing main dashboard",
+      "location": "StorePulse HQ homepage with AccuracyMeter, StatusDock, and ActionCards",
+      "components": [
+        "AccuracyMeter",
+        "StatusDock",
+        "ActionCard",
+        "WhatIfPanel"
+      ],
+      "manual_verification_required": true
+    },
+    {
+      "filename": "02_data_page.png",
+      "description": "Data page with upload functionality",
+      "location": "Data page (/data) with UploadBox component",
+      "components": [
+        "UploadBox",
+        "DataValidation"
+      ],
+      "manual_verification_required": true
+    },
+    {
+      "filename": "03_data_uploaded.png",
+      "description": "Data upload success state with validation feedback",
+      "components": [
+        "UploadBox",
+        "ValidationResults"
+      ],
+      "manual_verification_required": true
+    },
+    {
+      "filename": "04_train_page.png",
+      "description": "Training page with model configuration options",
+      "location": "Train page (/train) with Quick/Full accuracy toggle",
+      "components": [
+        "TrainingControls",
+        "AccuracyToggle"
+      ],
+      "manual_verification_required": true
+    },
+    {
+      "filename": "05_toggle_test.png",
+      "description": "Quick demo / Full accuracy toggle interaction",
+      "test_focus": "API round-trip verification for toggle state",
+      "manual_verification_required": true
+    },
+    {
+      "filename": "06_training_started.png",
+      "description": "Training process initiated with progress indicators",
+      "components": [
+        "ProgressIndicator",
+        "SSEConnection"
+      ],
+      "manual_verification_required": true
+    },
+    {
+      "filename": "07_training_progress.png",
+      "description": "Real-time training progress via SSE",
+      "test_focus": "Server-Sent Events monitoring",
+      "manual_verification_required": true
+    },
+    {
+      "filename": "08_reports_page.png",
+      "description": "Reports page with export functionality",
+      "location": "Reports page (/reports) with PDF export options",
+      "components": [
+        "ExportPlan",
+        "ReportsList"
+      ],
+      "manual_verification_required": true
+    },
+    {
+      "filename": "09_export_initiated.png",
+      "description": "PDF export process started",
+      "test_focus": "Download functionality and file generation",
+      "manual_verification_required": true
+    },
+    {
+      "filename": "10_final_state.png",
+      "description": "Final application state after complete flow",
+      "summary": "End-to-end flow completion verification",
+      "manual_verification_required": true
+    }
+  ],
+  "test_requirements": {
+    "critical_paths": [
+      "Data upload \u2192 Train (Quick) \u2192 Export PDF \u2192 Download",
+      "Quick/Full accuracy toggle round-trip",
+      "SSE progress monitoring"
+    ],
+    "api_endpoints_verified": [
+      "GET /health",
+      "POST /files/upload",
+      "GET /forecast/",
+      "Training endpoints",
+      "Export endpoints"
+    ],
+    "components_tested": [
+      "UploadBox",
+      "AccuracyMeter",
+      "StatusDock",
+      "WhatIfPanel",
+      "ExportPlan",
+      "Navigation"
+    ]
+  },
+  "automation_blocker": "Tauri version mismatch prevents desktop app launch",
+  "next_steps": [
+    "Resolve Tauri package versions (tauri v2.0.0 \u2194 @tauri-apps/api v2.8.0)",
+    "Build and launch desktop application",
+    "Execute automated screenshot capture",
+    "Verify all component interactions",
+    "Complete manual testing checklist"
+  ]
+}
