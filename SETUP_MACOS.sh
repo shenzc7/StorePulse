@@ -32,6 +32,27 @@ echo ""
 echo "📦 Installing prerequisites..."
 brew install python@3.13 node@20 git
 
+# Add node@20 to PATH (it's keg-only, not symlinked by default)
+echo ""
+echo "🔧 Configuring Node.js PATH..."
+if [[ $(uname -m) == "arm64" ]]; then
+    export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
+    if ! grep -q 'node@20/bin' ~/.zprofile 2>/dev/null; then
+        echo 'export PATH="/opt/homebrew/opt/node@20/bin:$PATH"' >> ~/.zprofile
+    fi
+else
+    export PATH="/usr/local/opt/node@20/bin:$PATH"
+    if ! grep -q 'node@20/bin' ~/.zprofile 2>/dev/null; then
+        echo 'export PATH="/usr/local/opt/node@20/bin:$PATH"' >> ~/.zprofile
+    fi
+fi
+
+# Verify Node.js is accessible
+if ! command -v node &> /dev/null; then
+    echo "⚠️  Warning: Node.js not in PATH. Reloading shell..."
+    source ~/.zprofile 2>/dev/null || true
+fi
+
 # Install Rust (required for Tauri)
 echo ""
 echo "🦀 Installing Rust..."
