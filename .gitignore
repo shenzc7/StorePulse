@@ -55,6 +55,10 @@ yarn-error.log*
 .npm
 .eslintcache
 
+# Vite
+.vite/
+dist/
+
 # Tauri
 src/src-tauri/target/
 src/src-tauri/Cargo.lock
