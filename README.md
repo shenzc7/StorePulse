@@ -4,6 +4,28 @@
 
 ## 🚀 Quick Start - Get Running in 5 Minutes
 
+### 🍎 macOS - One Command Setup (Easiest!)
+
+**Copy and paste this single command into your terminal:**
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"
+```
+
+**This single command will:**
+- ✅ Install Homebrew (if needed)
+- ✅ Install Python 3.13, Node.js 20, Git, and Rust
+- ✅ Clone the StorePulse repository
+- ✅ Install all Python and Node.js dependencies
+- ✅ Verify your setup
+- ✅ Start the application automatically
+
+**Time:** 10-15 minutes (depending on internet speed)
+
+---
+
+### Manual Setup (All Platforms)
+
 ### Step 1: Clone the Repository
 
 **Option A: Using GitHub Desktop (Easiest for Non-Developers)**
@@ -300,14 +322,33 @@ cd ..
 ./dev.sh  # or .\dev.sh on Windows
 ```
 
-## 🛠️ Environment Setup
+## 🛠️ Developer Setup
 
-### Backend Dependencies
+### macOS - Automated Setup (Recommended)
+
+**One command to install everything:**
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"
+```
+
+This installs:
+- Homebrew (package manager)
+- Python 3.13
+- Node.js 20
+- Rust/Cargo (required for Tauri)
+- Git
+- All project dependencies
+- Starts the application
+
+### Manual Setup
+
+#### Backend Dependencies
 - Python 3.11+ with the packages listed in `api/requirements.txt` (install via `pip install -r api/requirements.txt`)
 - `psutil` powers system health telemetry exposed on the Settings page.
 - `openpyxl` and `xlrd` enable native Excel import/export pathways without round-tripping through external tooling.
 
-### Frontend Configuration
+#### Frontend Configuration
 - Set `VITE_API_BASE_URL` to override the default `http://127.0.0.1:9000` API origin when packaging or proxying through another port.
   ```bash
   # Example
@@ -315,6 +356,15 @@ cd ..
   npm run dev
   ```
 - If unset, the client automatically falls back to `127.0.0.1:9000` (or `localhost`) and uses Tauri's injected base URL when running as a desktop bundle.
+
+#### Prerequisites
+- **Rust/Cargo** (REQUIRED for Tauri): Install from [rustup.rs](https://rustup.rs/) or run:
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  source ~/.cargo/env
+  ```
+
+See [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for detailed setup instructions.
 
 ## 🎯 How It Works - The NB-INGARCH Approach
 
