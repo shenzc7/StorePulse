@@ -1,6 +1,6 @@
 {
-  "dataset": "/Users/shenzc/Desktop/projects/StorePulse/data/samples/lite_sample.csv",
-  "rows": 335,
+  "dataset": "/var/folders/mr/k56xtgss4jb13qczsw_6mbbr0000gn/T/storepulse_train_dyz9gqzr/lite_sample.csv",
+  "rows": 150,
   "feature_cols": [
     "lag_1",
     "lag_2",
@@ -25,22 +25,22 @@
     "quarter"
   ],
   "model_spec": {
-    "p": 1,
+    "p": 2,
     "q": 1,
     "type": "INGARCH"
   },
   "training_metrics": {
-    "smape": 11.984046642615368,
-    "mase": 0.03025106137269876,
-    "rmse": 19.0129595477699,
-    "ma7_smape": 11.646946308385782,
-    "naive_smape": 12.61199056500002
+    "smape": 37.91396897605578,
+    "mase": 0.017137862794759675,
+    "rmse": 74.9795714342632,
+    "ma7_smape": 39.90870408019991,
+    "naive_smape": 51.83469153957632
   },
   "quality_gate": {
     "applies": true,
     "threshold_pct": 0.0,
-    "lift_pct": -2.8943237592404287,
-    "passed": false
+    "lift_pct": 4.9982457464305154,
+    "passed": true
   },
   "backtest": {
     "csv": "/Users/shenzc/Desktop/projects/StorePulse/reports/backtests/ingarch_backtest.csv",

@@ -80,6 +80,16 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  // Ensure time strings are always valid HH:MM to avoid native input pattern errors
+  const normalizeTime = (value?: string | null): string => {
+    if (!value) return '06:00';
+    const match = /^(\d{1,2}):(\d{1,2})/.exec(value.trim());
+    if (!match) return '06:00';
+    const hours = Math.min(23, Math.max(0, parseInt(match[1], 10)));
+    const minutes = Math.min(59, Math.max(0, parseInt(match[2], 10)));
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
   
   useEffect(() => {
     loadSettings();
@@ -91,7 +101,14 @@ export function SettingsPage() {
   const loadSettings = async () => {
     try {
       const data = await apiGet<AppSettings>('/api/settings/');
-      setSettings(data);
+      const normalized: AppSettings = {
+        ...data,
+        automation: {
+          ...data.automation,
+          auto_forecast_time: normalizeTime(data.automation?.auto_forecast_time),
+        },
+      };
+      setSettings(normalized);
       setError(null);
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -118,9 +135,17 @@ export function SettingsPage() {
       setError(null);
       setSuccessMessage(null);
       
-      await apiPut(`/api/settings/`, { section, settings: newSettings });
+      const payload =
+        section === 'automation'
+          ? {
+              ...newSettings,
+              auto_forecast_time: normalizeTime(newSettings?.auto_forecast_time),
+            }
+          : newSettings;
 
-      setSettings(prev => prev ? { ...prev, [section]: newSettings } : null);
+      await apiPut(`/api/settings/`, { section, settings: payload });
+
+      setSettings(prev => prev ? { ...prev, [section]: payload } : null);
       
       if (section === 'auto_run') {
         localStorage.setItem('storepulse_auto_run', newSettings.toString());

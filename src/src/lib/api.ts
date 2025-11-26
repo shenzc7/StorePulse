@@ -2,19 +2,31 @@
  * API utility for making requests to the StorePulse backend
  */
 
-const LOCAL_PRIMARY = 'http://127.0.0.1:9000';
-const LOCAL_SECONDARY = 'http://localhost:9000';
+const LOCAL_PRIMARY = 'http://localhost:9000';
+const LOCAL_SECONDARY = 'http://127.0.0.1:9000';
 
 let PRIMARY_BASE = '';
 let FALLBACK_BASE = LOCAL_PRIMARY;
+
+function normalizeBase(base: string | undefined | null): string {
+  if (!base) return '';
+  let trimmed = String(base).trim();
+  if (!/^https?:\/\//i.test(trimmed)) {
+    // If scheme missing, assume http to avoid "expected pattern" URL errors
+    trimmed = `http://${trimmed}`;
+  }
+  // Remove trailing slash for predictable joining
+  return trimmed.replace(/\/+$/, '');
+}
 
 const ENV_BASE = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL
   ? String(import.meta.env.VITE_API_BASE_URL)
   : '';
 
 if (ENV_BASE) {
-  PRIMARY_BASE = ENV_BASE;
-  FALLBACK_BASE = ENV_BASE;
+  const normalized = normalizeBase(ENV_BASE);
+  PRIMARY_BASE = normalized;
+  FALLBACK_BASE = normalized || FALLBACK_BASE;
 }
 
 if (typeof window !== 'undefined') {
@@ -24,20 +36,34 @@ if (typeof window !== 'undefined') {
   };
 
   if (globalWindow.__STOREPULSE_API__) {
-    PRIMARY_BASE = globalWindow.__STOREPULSE_API__ as string;
-    FALLBACK_BASE = LOCAL_SECONDARY;
+    PRIMARY_BASE = normalizeBase(globalWindow.__STOREPULSE_API__ as string);
+    FALLBACK_BASE = PRIMARY_BASE || LOCAL_SECONDARY;
   } else if (globalWindow.__TAURI__ || globalWindow.location?.protocol === 'file:') {
     PRIMARY_BASE = LOCAL_PRIMARY;
     FALLBACK_BASE = LOCAL_SECONDARY;
   } else {
-    PRIMARY_BASE = '';
-    FALLBACK_BASE = LOCAL_PRIMARY;
+    // In development mode, use Vite proxy or direct connection
+    // Always ensure PRIMARY_BASE has a valid default to avoid URL pattern errors
+    PRIMARY_BASE = LOCAL_PRIMARY;
+    FALLBACK_BASE = LOCAL_SECONDARY;
   }
 }
 
+// Ensure PRIMARY_BASE always has a valid default to prevent URL pattern errors
+if (!PRIMARY_BASE || PRIMARY_BASE.trim() === '') {
+  PRIMARY_BASE = LOCAL_PRIMARY;
+}
+
 function withBase(endpoint: string, base: string) {
-  // "Return the JSX structure for this component."
-  return `${base}${endpoint}`;
+  // Ensure we always have a single slash between base and endpoint
+  if (!base || base.trim() === '') {
+    // If no base provided, return endpoint as-is (assumes relative URL or absolute endpoint)
+    return endpoint;
+  }
+  // Always add a slash between base and endpoint
+  const cleanBase = base.replace(/\/+$/, '');
+  const cleanEndpoint = endpoint.replace(/^\/+/, '');
+  return `${cleanBase}/${cleanEndpoint}`;
 }
 
 type FetchConfig = {
@@ -55,17 +81,27 @@ async function safeParseJson<T>(response: Response): Promise<T> {
 
 async function requestWithFallback<T>({ endpoint, init }: FetchConfig): Promise<T> {
   const isAbsolute = /^https?:\/\//i.test(endpoint);
-  const bases = [PRIMARY_BASE];
+  const bases = [PRIMARY_BASE, FALLBACK_BASE, LOCAL_PRIMARY]
+    .filter((b) => b && b.trim().length > 0)
+    .map((b, idx, arr) => {
+      // Ensure uniqueness while preserving order
+      if (arr.indexOf(b) !== idx) return '';
+      return b;
+    })
+    .filter(Boolean);
 
-  if (FALLBACK_BASE && FALLBACK_BASE !== PRIMARY_BASE) {
-    bases.push(FALLBACK_BASE);
+  // Ensure we have at least one base URL
+  if (bases.length === 0) {
+    bases.push(LOCAL_PRIMARY);
   }
 
   let lastHttpError: ApiError | null = null;
   let lastNetworkError: Error | null = null;
+  const attemptedUrls: string[] = [];
 
   for (const base of bases) {
     const url = isAbsolute ? endpoint : withBase(endpoint, base);
+    attemptedUrls.push(url);
 
     try {
       const response = await fetch(url, init);
@@ -85,7 +121,19 @@ async function requestWithFallback<T>({ endpoint, init }: FetchConfig): Promise<
 
       return await safeParseJson<T>(response);
     } catch (error) {
-      lastNetworkError = error instanceof Error ? error : new Error('Network error');
+      // Normalize URL/DOM parsing errors into a friendly message
+      let message = 'Network error';
+      if (error instanceof Error) {
+        const errorMsg = error.message?.toLowerCase() || '';
+        if (errorMsg.includes('pattern') || errorMsg.includes('invalid url')) {
+          message = `Invalid API URL format. Tried: ${attemptedUrls.join(', ')}. Please ensure backend is running on port 9000.`;
+        } else if (errorMsg.includes('failed to fetch') || errorMsg.includes('networkerror')) {
+          message = `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9000.`;
+        } else {
+          message = error.message;
+        }
+      }
+      lastNetworkError = new Error(message);
       continue;
     }
   }
@@ -94,8 +142,11 @@ async function requestWithFallback<T>({ endpoint, init }: FetchConfig): Promise<
     throw lastHttpError;
   }
 
+  const errorMessage = lastNetworkError?.message 
+    ?? `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9000.`;
+  
   throw {
-    message: lastNetworkError?.message ?? 'Network error - ensure backend is running',
+    message: errorMessage,
     status: 0,
   } as ApiError;
 }
@@ -210,10 +261,15 @@ export async function apiDelete<T>(endpoint: string): Promise<T> {
  * Create an EventSource for Server-Sent Events
  */
 export function createEventSource(endpoint: string): EventSource {
-  // EventSource does not easily support runtime fallback; use PRIMARY_BASE.
-  const base = PRIMARY_BASE || FALLBACK_BASE || '';
+  // EventSource requires absolute URLs, so always use a valid base
+  const base = PRIMARY_BASE || FALLBACK_BASE || LOCAL_PRIMARY;
   const url = withBase(endpoint, base);
-  // "Return the JSX structure for this component."
+  
+  // Validate URL is absolute to prevent pattern errors
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error(`Invalid EventSource URL: ${url}. EventSource requires an absolute URL starting with http:// or https://`);
+  }
+  
   return new EventSource(url);
 }
 

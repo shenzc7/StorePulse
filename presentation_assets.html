@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StorePulse - Technical Architecture</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #000000;
+            --white: #ffffff;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #e5e5e5;
+            --gray-300: #d4d4d4;
+            --gray-400: #a3a3a3;
+            --gray-500: #737373;
+            --gray-600: #525252;
+            --gray-700: #404040;
+            --gray-800: #262626;
+            --gray-900: #171717;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            background: var(--white);
+            color: var(--black);
+            padding: 24px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                padding: 0;
+                font-size: 10pt;
+            }
+            .section {
+                page-break-inside: avoid;
+                margin-bottom: 32px;
+                padding-bottom: 24px;
+            }
+            .mermaid {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 28px 20px;
+            margin-bottom: 32px;
+            border-bottom: 2px solid var(--black);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .header .subtitle {
+            font-size: 1em;
+            color: var(--gray-600);
+            font-weight: 400;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 36px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .section:last-of-type {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--black);
+            display: inline-block;
+        }
+
+        .section h3 {
+            font-size: 1em;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            color: var(--gray-800);
+        }
+
+        .section p {
+            color: var(--gray-700);
+            font-size: 0.9em;
+            margin-bottom: 12px;
+        }
+
+        /* Mermaid Diagrams - Print/PDF optimized */
+        .mermaid {
+            margin: 24px 0;
+            padding: 24px;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-300);
+            display: flex;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .diagram-title {
+            font-size: 0.7em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            color: var(--gray-500);
+        }
+
+        /* Flow Container */
+        .flow-container {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-300);
+            padding: 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+
+        /* Custom Flow Boxes */
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 800px;
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .flow-box {
+            background: var(--white);
+            border: 1px solid var(--black);
+            padding: 6px 10px;
+            font-size: 0.7em;
+            font-weight: 500;
+            text-align: center;
+            min-width: 70px;
+            position: relative;
+        }
+
+        .flow-box small {
+            display: block;
+            font-size: 0.8em;
+            color: var(--gray-500);
+            font-weight: 400;
+            margin-top: 1px;
+        }
+
+        .flow-box.start {
+            background: var(--black);
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .flow-box.end {
+            background: var(--black);
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .flow-box.highlight {
+            border-width: 2px;
+        }
+
+        .flow-arrow {
+            font-size: 0.9em;
+            color: var(--gray-400);
+        }
+
+        .flow-label {
+            position: absolute;
+            top: -14px;
+            left: 0;
+            font-size: 0.6em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+            white-space: nowrap;
+        }
+
+        /* Data Entry Cards */
+        .entry-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .entry-card {
+            border: 1px solid var(--black);
+            padding: 14px;
+            background: var(--white);
+        }
+
+        .entry-card h4 {
+            font-size: 0.9em;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .entry-card h4 i {
+            font-size: 0.9em;
+        }
+
+        .entry-card p {
+            font-size: 0.75em;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+
+        .entry-card .fields {
+            background: var(--gray-100);
+            padding: 8px 10px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7em;
+        }
+
+        .entry-card .tag {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 2px 8px;
+            border: 1px solid var(--black);
+            font-size: 0.65em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Metrics - Visual Bar Chart Style */
+        .metrics-visual {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .metric-card {
+            border: 1px solid var(--black);
+            padding: 14px;
+            background: var(--white);
+        }
+
+        .metric-card .label {
+            font-size: 0.65em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+        }
+
+        .metric-card .value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .metric-card .bar-container {
+            height: 6px;
+            background: var(--gray-200);
+            margin-bottom: 6px;
+        }
+
+        .metric-card .bar {
+            height: 100%;
+            background: var(--black);
+        }
+
+        .metric-card .description {
+            font-size: 0.7em;
+            color: var(--gray-600);
+        }
+
+        /* Comparison Chart */
+        .comparison-chart {
+            border: 1px solid var(--black);
+            padding: 16px;
+            margin: 16px 0;
+            background: var(--white);
+        }
+
+        .chart-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .chart-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .chart-label {
+            width: 140px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .chart-bar-container {
+            flex: 1;
+            height: 22px;
+            background: var(--gray-100);
+            position: relative;
+            margin: 0 10px;
+        }
+
+        .chart-bar {
+            height: 100%;
+            background: var(--gray-400);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 6px;
+        }
+
+        .chart-bar.best {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .chart-bar span {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .chart-value {
+            width: 60px;
+            text-align: right;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        /* Process Steps */
+        .process-steps {
+            display: flex;
+            gap: 0;
+            margin: 16px 0;
+            border: 1px solid var(--black);
+        }
+
+        .process-step {
+            flex: 1;
+            padding: 12px 10px;
+            border-right: 1px solid var(--gray-300);
+            position: relative;
+        }
+
+        .process-step:last-child {
+            border-right: none;
+        }
+
+        .process-step .number {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--gray-300);
+            margin-bottom: 4px;
+        }
+
+        .process-step h5 {
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .process-step p {
+            font-size: 0.7em;
+            color: var(--gray-600);
+            line-height: 1.4;
+        }
+
+        /* Feature List */
+        .feature-columns {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .feature-col h5 {
+            font-size: 0.65em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .feature-col ul {
+            list-style: none;
+        }
+
+        .feature-col li {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7em;
+            padding: 2px 0;
+            border-bottom: 1px dotted var(--gray-200);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.75em;
+        }
+
+        th, td {
+            padding: 6px 10px;
+            text-align: left;
+            border: 1px solid var(--gray-300);
+        }
+
+        th {
+            background: var(--black);
+            color: var(--white);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7em;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            background: var(--white);
+        }
+
+        tr:nth-child(even) td {
+            background: var(--gray-50);
+        }
+
+        code {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--gray-100);
+            padding: 1px 4px;
+            font-size: 0.9em;
+        }
+
+        /* Source Box */
+        .source-box {
+            background: var(--gray-100);
+            border-left: 3px solid var(--black);
+            padding: 10px 14px;
+            margin: 12px 0;
+            font-size: 0.75em;
+        }
+
+        .source-box strong {
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            margin-top: 32px;
+            border-top: 2px solid var(--black);
+            font-size: 0.8em;
+            color: var(--gray-600);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .entry-grid {
+                grid-template-columns: 1fr;
+            }
+            .metrics-visual {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .feature-columns {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .process-steps {
+                flex-wrap: wrap;
+            }
+            .process-step {
+                flex: 0 0 calc(33.33% - 1px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>StorePulse</h1>
+            <div class="subtitle">Demand Forecasting Platform — NB-INGARCH Models</div>
+        </div>
+
+        <!-- FULL SYSTEM ARCHITECTURE GRAPH -->
+        <div class="section">
+            <h2>Full System Architecture</h2>
+            <p>Complete system overview showing all components and data flow.</p>
+
+            <div class="mermaid">
+                graph TB
+                    subgraph INPUT["📥 DATA INPUT"]
+                        direction LR
+                        A1["Daily Entry<br/>(Lite/Pro)"]
+                        A2["CSV Upload"]
+                        A3["Excel Upload<br/>(.xlsx/.xls)"]
+                        A4["JSON API"]
+                    end
+
+                    subgraph PROCESS["⚙️ PROCESSING"]
+                        direction LR
+                        B1["Validation &<br/>Parsing"]
+                        B2["Excel → CSV<br/>Conversion"]
+                    end
+
+                    subgraph STORAGE["💾 DATABASE"]
+                        C1[("SQLite<br/>visits, models,<br/>forecast_cache")]
+                    end
+
+                    subgraph ML["🧠 ML ENGINE"]
+                        direction LR
+                        D1["Feature<br/>Engineering<br/>(21 features)"]
+                        D2["INGARCH<br/>Trainer<br/>(p=2, q=1)"]
+                        D3["Quality Gate<br/>(vs MA7)"]
+                        D4["Model<br/>Artifact<br/>(.joblib)"]
+                    end
+
+                    subgraph OUTPUT["📊 OUTPUT"]
+                        direction LR
+                        E1["Forecast<br/>Service"]
+                        E2["7-Day<br/>Predictions"]
+                        E3["Reports<br/>Export"]
+                    end
+
+                    A1 --> B1
+                    A2 --> B1
+                    A3 --> B2
+                    A4 --> B1
+                    B2 --> B1
+                    B1 --> C1
+                    C1 --> D1
+                    D1 --> D2
+                    D2 --> D3
+                    D3 --> D4
+                    D4 --> C1
+                    C1 --> E1
+                    E1 --> E2
+                    E2 --> E3
+            </div>
+        </div>
+
+        <!-- BACKEND PROCESSING FLOW -->
+        <div class="section">
+            <h2>Backend Processing Flow</h2>
+            <p>Detailed view of how the FastAPI backend handles requests.</p>
+
+            <div class="mermaid">
+                graph LR
+                    subgraph ENDPOINTS["🌐 API ENDPOINTS"]
+                        R1["/files/upload"]
+                        R2["/data/add_today"]
+                        R3["/train/"]
+                        R4["/forecast"]
+                    end
+
+                    subgraph HANDLERS["📁 ROUTE HANDLERS"]
+                        H1["files.py"]
+                        H2["data.py"]
+                        H3["train.py"]
+                        H4["forecast.py"]
+                    end
+
+                    subgraph CORE["⚙️ CORE SERVICES"]
+                        S1["db.py<br/>VisitRepository"]
+                        S2["feats.py<br/>build_features()"]
+                        S3["forecast_service.py"]
+                    end
+
+                    subgraph ML["🧠 ML MODULE"]
+                        M1["train_ingarch.py"]
+                        M2["baselines.py"]
+                    end
+
+                    R1 --> H1
+                    R2 --> H2
+                    R3 --> H3
+                    R4 --> H4
+
+                    H1 --> S1
+                    H2 --> S1
+                    H3 --> S2
+                    H4 --> S3
+
+                    S2 --> M1
+                    M1 --> M2
+                    S3 --> S1
+            </div>
+        </div>
+
+        <!-- DATA INPUT FLOW DIAGRAM -->
+        <div class="section">
+            <h2>Data Input Flow</h2>
+            <p>Four pathways for data entry — all converge to the same processing pipeline.</p>
+
+            <div class="flow-container">
+                <div class="diagram-title">Data Entry Pathways</div>
+                <div class="flow-diagram">
+                    <!-- Daily Lite -->
+                    <div class="flow-row">
+                        <div class="flow-box start">INPUT</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">
+                            <span class="flow-label">Option A</span>
+                            Daily Entry
+                            <small>Lite: 2 fields</small>
+                        </div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">Validate<br/><small>date, visits≥0</small></div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">SQLite</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">21 Features</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">INGARCH</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box end">FORECAST</div>
+                    </div>
+
+                    <!-- Daily Pro -->
+                    <div class="flow-row">
+                        <div class="flow-box start">INPUT</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">
+                            <span class="flow-label">Option B</span>
+                            Daily Entry
+                            <small>Pro: 10 fields</small>
+                        </div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">Validate<br/><small>+ weather, promo</small></div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">SQLite</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">21+ Features</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">INGARCH</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box end">FORECAST</div>
+                    </div>
+
+                    <!-- CSV Upload -->
+                    <div class="flow-row">
+                        <div class="flow-box start">INPUT</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">
+                            <span class="flow-label">Option C</span>
+                            CSV Upload
+                            <small>max 10K rows</small>
+                        </div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">Parse<br/><small>pd.read_csv()</small></div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">SQLite</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">21 Features</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">INGARCH</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box end">FORECAST</div>
+                    </div>
+
+                    <!-- Excel Upload -->
+                    <div class="flow-row">
+                        <div class="flow-box start">INPUT</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">
+                            <span class="flow-label">Option D</span>
+                            Excel Upload
+                            <small>.xlsx / .xls</small>
+                        </div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box highlight">pd.read_excel()<br/><small>→ DataFrame</small></div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box highlight">df.to_csv()<br/><small>convert</small></div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">SQLite</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">21 Features</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box">INGARCH</div>
+                        <i class="fas fa-long-arrow-alt-right flow-arrow"></i>
+                        <div class="flow-box end">FORECAST</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXCEL PROCESSING DETAILED -->
+        <div class="section">
+            <h2>Excel File Processing</h2>
+            <p>Step-by-step breakdown of how Excel files are converted and processed.</p>
+
+            <div class="mermaid">
+                graph LR
+                    A["📊 EXCEL FILE<br/>.xlsx / .xls"] 
+                    B["CHECK<br/>Extension"]
+                    C["CHECK<br/>Size ≤ 50MB"]
+                    D["PANDAS<br/>pd.read_excel()"]
+                    E["CHECK<br/>Rows ≤ 10K"]
+                    F["CONVERT<br/>df.to_csv()"]
+                    G["SAVE<br/>data/samples/"]
+                    H["✓ READY"]
+
+                    A --> B --> C --> D --> E --> F --> G --> H
+            </div>
+
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="number">01</div>
+                    <h5>Upload</h5>
+                    <p>POST /files/upload with multipart form data</p>
+                </div>
+                <div class="process-step">
+                    <div class="number">02</div>
+                    <h5>Validate Ext</h5>
+                    <p>.xlsx, .xls, .csv, .json allowed</p>
+                </div>
+                <div class="process-step">
+                    <div class="number">03</div>
+                    <h5>Size Check</h5>
+                    <p>Max 50MB file size limit</p>
+                </div>
+                <div class="process-step">
+                    <div class="number">04</div>
+                    <h5>Pandas Load</h5>
+                    <p>pd.read_excel() into DataFrame</p>
+                </div>
+                <div class="process-step">
+                    <div class="number">05</div>
+                    <h5>Row Limit</h5>
+                    <p>Enforce ≤ 10,000 rows</p>
+                </div>
+                <div class="process-step">
+                    <div class="number">06</div>
+                    <h5>Convert</h5>
+                    <p>df.to_csv() saves as CSV</p>
+                </div>
+            </div>
+
+            <div class="source-box">
+                <strong>Source:</strong> <code>api/routes/files.py</code> → <code>upload_file()</code>, <code>_enforce_row_limit()</code>
+            </div>
+        </div>
+
+        <!-- REAL-TIME PERFORMANCE METRICS -->
+        <div class="section">
+            <h2>Real-Time Performance Metrics</h2>
+            <p>Live metrics from trained INGARCH(2,1) model on 150-day retail dataset.</p>
+
+            <div class="metrics-visual">
+                <div class="metric-card">
+                    <div class="label">SMAPE (Lower is Better)</div>
+                    <div class="value">37.91%</div>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 37.91%;"></div>
+                    </div>
+                    <div class="description">Symmetric Mean Absolute Percentage Error</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">MASE (Lower is Better)</div>
+                    <div class="value">0.017</div>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 1.7%;"></div>
+                    </div>
+                    <div class="description">Mean Absolute Scaled Error — 98.3% better than naive</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">RMSE</div>
+                    <div class="value">74.98</div>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 75%;"></div>
+                    </div>
+                    <div class="description">Root Mean Square Error (visits/day)</div>
+                </div>
+            </div>
+
+            <div class="metrics-visual">
+                <div class="metric-card">
+                    <div class="label">vs MA7 Baseline</div>
+                    <div class="value">+5.0%</div>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 100%;"></div>
+                    </div>
+                    <div class="description">Improvement over 7-day Moving Average</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Training Rows</div>
+                    <div class="value">150</div>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 15%;"></div>
+                    </div>
+                    <div class="description">Days of historical data used</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Feature Count</div>
+                    <div class="value">21</div>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 100%;"></div>
+                    </div>
+                    <div class="description">Engineered features for model training</div>
+                </div>
+            </div>
+
+            <h3>Model Comparison Chart</h3>
+            <div class="comparison-chart">
+                <div class="chart-row">
+                    <div class="chart-label">Naive Baseline</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar" style="width: 100%;">
+                            <span>51.83%</span>
+                        </div>
+                    </div>
+                    <div class="chart-value">51.83%</div>
+                </div>
+                <div class="chart-row">
+                    <div class="chart-label">MA7 Baseline</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar" style="width: 77%;">
+                            <span>39.91%</span>
+                        </div>
+                    </div>
+                    <div class="chart-value">39.91%</div>
+                </div>
+                <div class="chart-row">
+                    <div class="chart-label"><strong>NB-INGARCH(2,1)</strong></div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar best" style="width: 73%;">
+                            <span>37.91%</span>
+                        </div>
+                    </div>
+                    <div class="chart-value"><strong>37.91%</strong></div>
+                </div>
+            </div>
+
+            <div class="source-box">
+                <strong>Source:</strong> <code>ml/artifacts/lite/ingarch_report.json</code><br>
+                <strong>Model:</strong> <code>ml/artifacts/lite/ingarch_model.joblib</code>
+            </div>
+        </div>
+
+        <!-- TRAINING PIPELINE FLOW -->
+        <div class="section">
+            <h2>Training Pipeline Flow</h2>
+            <p>Complete sequence from data upload to trained model.</p>
+
+            <div class="mermaid">
+                sequenceDiagram
+                    participant User
+                    participant API as FastAPI
+                    participant DB as SQLite
+                    participant FE as FeatureEng
+                    participant ML as INGARCH
+                    participant FS as Files
+
+                    User->>API: POST /train/ (file upload)
+                    API->>API: Detect mode (Lite/Pro)
+                    API->>API: Validate (≥30 rows, no negatives)
+                    API->>DB: Clear old visits
+                    API->>DB: Insert new records
+                    API->>FE: Build feature matrix
+                    FE->>FE: Generate 6 lag features
+                    FE->>FE: Add 5 temporal features
+                    FE->>FE: Compute 4 rolling stats
+                    FE->>FE: Calculate 6 trend indicators
+                    FE-->>API: 21 features ready
+                    API->>ML: Train INGARCH(2,1)
+                    ML->>ML: MLE optimization
+                    ML->>ML: Fit AR + ARCH terms
+                    ML->>ML: Estimate dispersion
+                    ML-->>API: Model trained
+                    API->>API: Quality gate check (vs MA7)
+                    API->>FS: Save ingarch_model.joblib
+                    API->>FS: Save ingarch_report.json
+                    API-->>User: SSE: done + metrics
+            </div>
+        </div>
+
+        <!-- FORECAST GENERATION FLOW -->
+        <div class="section">
+            <h2>Forecast Generation Flow</h2>
+            <p>How predictions are generated when user requests a forecast.</p>
+
+            <div class="mermaid">
+                sequenceDiagram
+                    participant User
+                participant API as ForecastRoute
+                    participant Cache
+                    participant FS as ForecastService
+                    participant DB as SQLite
+                    participant Model as INGARCH
+
+                    User->>API: GET /forecast?days=7
+                    API->>Cache: Check cache
+                alt Cache Hit
+                        Cache-->>API: Return cached forecast
+                        API-->>User: Instant response
+                else Cache Miss
+                        API->>FS: Generate forecast
+                        FS->>DB: Fetch last 365 days
+                        DB-->>FS: Historical visits
+                        FS->>FS: Build features for each day
+                        FS->>Model: Load ingarch_model.joblib
+                        Model-->>FS: Model ready
+                        loop For each forecast day
+                            FS->>Model: predict(X_features)
+                            Model-->>FS: Point prediction
+                            FS->>FS: Calculate P10, P50, P90
+                        end
+                        FS-->>API: 7-day forecast + bounds
+                        API->>Cache: Store (TTL: 1 hour)
+                        API-->>User: JSON response
+                    end
+            </div>
+        </div>
+
+        <!-- FEATURE ENGINEERING -->
+        <div class="section">
+            <h2>Feature Engineering Pipeline</h2>
+            <p>21 features extracted from raw visit data.</p>
+
+            <div class="mermaid">
+                graph LR
+                    subgraph INPUT["📥 RAW DATA"]
+                        A["event_date<br/>visits"]
+                    end
+
+                    subgraph FEATURES["⚙️ FEATURE EXTRACTION"]
+                        B["LAG FEATURES (6)<br/>lag_1, lag_2, lag_7<br/>lag_14, lag_21, lag_30"]
+                        C["TEMPORAL (5)<br/>dow, is_weekend<br/>is_holiday, month, quarter"]
+                        D["ROLLING STATS (4)<br/>rolling_mean_7, rolling_std_7<br/>rolling_mean_14, rolling_std_14"]
+                        E["TREND (6)<br/>pct_change_1/7/14<br/>volatility, acceleration, trend"]
+                    end
+
+                    subgraph OUTPUT["📊 OUTPUT"]
+                        F["21 FEATURES<br/>→ INGARCH MODEL"]
+                    end
+
+                    A --> B
+                    A --> C
+                    A --> D
+                    A --> E
+                    B --> F
+                    C --> F
+                    D --> F
+                    E --> F
+        </div>
+
+            <div class="feature-columns">
+                <div class="feature-col">
+                    <h5>Lag Features (6)</h5>
+                    <ul>
+                        <li>lag_1</li>
+                        <li>lag_2</li>
+                        <li>lag_7</li>
+                        <li>lag_14</li>
+                        <li>lag_21</li>
+                        <li>lag_30</li>
+                    </ul>
+                </div>
+                <div class="feature-col">
+                    <h5>Temporal (5)</h5>
+                    <ul>
+                        <li>dow</li>
+                        <li>is_weekend</li>
+                        <li>is_holiday</li>
+                        <li>month</li>
+                        <li>quarter</li>
+                    </ul>
+                </div>
+                <div class="feature-col">
+                    <h5>Rolling Stats (4)</h5>
+                    <ul>
+                        <li>rolling_mean_7</li>
+                        <li>rolling_std_7</li>
+                        <li>rolling_mean_14</li>
+                        <li>rolling_std_14</li>
+                    </ul>
+                </div>
+                <div class="feature-col">
+                    <h5>Trend (6)</h5>
+                    <ul>
+                        <li>pct_change_1</li>
+                        <li>pct_change_7</li>
+                        <li>pct_change_14</li>
+                        <li>volatility_7</li>
+                        <li>acceleration</li>
+                        <li>trend_strength</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="source-box">
+                <strong>Source:</strong> <code>api/core/feats.py</code> → <code>build_features()</code>
+            </div>
+        </div>
+
+        <!-- DATA ENTRY MODES -->
+        <div class="section">
+            <h2>Data Entry Modes</h2>
+
+            <div class="entry-grid">
+                <div class="entry-card">
+                    <h4><i class="fas fa-calendar-day"></i> Daily Entry (Lite Mode)</h4>
+                    <p>Add one day at a time. Minimum fields for quick logging.</p>
+                    <div class="fields">
+                        event_date: 2024-11-25<br>
+                        visits: 342
+                    </div>
+                    <div class="tag">2 Fields</div>
+                </div>
+
+                <div class="entry-card">
+                    <h4><i class="fas fa-sliders-h"></i> Daily Entry (Pro Mode)</h4>
+                    <p>Full context: weather, promotions, sales, events.</p>
+                    <div class="fields">
+                        event_date, visits, sales,<br>
+                        conversion, promo_type, weather,<br>
+                        price_change, paydays, school_breaks,<br>
+                        local_events, open_hours
+            </div>
+                    <div class="tag">10 Fields</div>
+        </div>
+
+                <div class="entry-card">
+                    <h4><i class="fas fa-file-csv"></i> Bulk Upload (CSV)</h4>
+                    <p>Upload historical data as CSV file.</p>
+                    <div class="fields">
+                        Format: .csv<br>
+                        Max rows: 10,000<br>
+                        Max size: 50MB<br>
+                        Required: event_date, visits
+                    </div>
+                    <div class="tag">Batch Import</div>
+                </div>
+
+                <div class="entry-card">
+                    <h4><i class="fas fa-file-excel"></i> Bulk Upload (Excel)</h4>
+                    <p>Upload .xlsx or .xls — auto-converts to CSV.</p>
+                    <div class="fields">
+                        Format: .xlsx, .xls<br>
+                        Auto-convert → CSV<br>
+                        Same validation as CSV<br>
+                        Saved: {filename}.csv
+                    </div>
+                    <div class="tag">Excel Support</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DATABASE SCHEMA -->
+        <div class="section">
+            <h2>Database Schema</h2>
+
+            <div class="mermaid">
+                erDiagram
+                    VISITS {
+                        int id
+                        date event_date
+                        int visits
+                        float sales
+                        string promo_type
+                        string weather
+                    }
+
+                    MODELS {
+                        int id
+                        string mode
+                        string artifact_path
+                        json metrics
+                    }
+
+                    FORECAST_CACHE {
+                        int id
+                        string cache_key
+                        json forecast_data
+                    }
+
+                    VISITS ||--o{ MODELS : trains
+                    MODELS ||--o{ FORECAST_CACHE : generates
+            </div>
+        </div>
+
+        <!-- KEY FILES -->
+        <div class="section">
+            <h2>Key Files Reference</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Path</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>File Upload</td>
+                        <td><code>api/routes/files.py</code></td>
+                        <td>CSV/Excel upload, conversion, validation</td>
+                    </tr>
+                    <tr>
+                        <td>Data Entry</td>
+                        <td><code>api/routes/data.py</code></td>
+                        <td>Daily entry endpoints (Lite/Pro)</td>
+                    </tr>
+                    <tr>
+                        <td>Training</td>
+                        <td><code>api/routes/train.py</code></td>
+                        <td>Training pipeline orchestration</td>
+                    </tr>
+                    <tr>
+                        <td>Features</td>
+                        <td><code>api/core/feats.py</code></td>
+                        <td>21 feature extraction</td>
+                    </tr>
+                    <tr>
+                        <td>INGARCH</td>
+                        <td><code>ml/train_ingarch.py</code></td>
+                        <td>Model training logic</td>
+                    </tr>
+                    <tr>
+                        <td>Schemas</td>
+                        <td><code>api/core/schemas.py</code></td>
+                        <td>LiteRecord, ProRecord definitions</td>
+                    </tr>
+                    <tr>
+                        <td>Database</td>
+                        <td><code>api/core/db.py</code></td>
+                        <td>SQLite operations</td>
+                    </tr>
+                    <tr>
+                        <td>Forecast</td>
+                        <td><code>api/core/forecast_service.py</code></td>
+                        <td>Prediction generation</td>
+                    </tr>
+                    <tr>
+                        <td>Model Artifact</td>
+                        <td><code>ml/artifacts/lite/ingarch_model.joblib</code></td>
+                        <td>Trained model file</td>
+                    </tr>
+                    <tr>
+                        <td>Metrics Report</td>
+                        <td><code>ml/artifacts/lite/ingarch_report.json</code></td>
+                        <td>Training metrics</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <strong>StorePulse</strong> — Demand Forecasting Platform<br>
+            All metrics from actual trained model • 150-day dataset • INGARCH(2,1)
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'neutral',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#000000',
+                primaryBorderColor: '#000000',
+                lineColor: '#404040',
+                secondaryColor: '#f5f5f5',
+                tertiaryColor: '#ffffff',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                nodeBorder: '#000000',
+                clusterBkg: '#fafafa',
+                clusterBorder: '#000000',
+                titleColor: '#000000',
+                edgeLabelBackground: '#ffffff',
+                actorBorder: '#000000',
+                actorBkg: '#ffffff',
+                actorTextColor: '#000000',
+                actorLineColor: '#404040',
+                signalColor: '#404040',
+                signalTextColor: '#000000',
+                labelBoxBkgColor: '#f5f5f5',
+                labelBoxBorderColor: '#000000',
+                labelTextColor: '#000000',
+                loopTextColor: '#000000',
+                noteBorderColor: '#000000',
+                noteBkgColor: '#f5f5f5',
+                noteTextColor: '#000000',
+                sequenceNumberColor: '#ffffff',
+                fontSize: '12px'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                nodeSpacing: 25,
+                rankSpacing: 35,
+                padding: 10
+            },
+            sequence: {
+                useMaxWidth: true,
+                actorMargin: 30,
+                boxMargin: 5,
+                noteMargin: 5,
+                messageMargin: 25,
+                mirrorActors: false,
+                height: 40,
+                width: 120,
+                boxTextMargin: 5
+            },
+            er: {
+                useMaxWidth: true,
+                entityPadding: 12,
+                stroke: '#000000',
+                fill: '#ffffff',
+                fontSize: 11
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -27,7 +27,7 @@ fi
 
 source api_venv/bin/activate
 export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
-nohup uvicorn api.main:app --host 127.0.0.1 --port 9000 --reload > /tmp/storepulse-backend.log 2>&1 &
+nohup uvicorn api.main:app --host 0.0.0.0 --port 9000 --reload > /tmp/storepulse-backend.log 2>&1 &
 BACKEND_PID=$!
 
 # Wait for backend
@@ -43,15 +43,47 @@ fi
 # Start Vite
 echo "🌐 Starting Vite dev server on port 5173..."
 cd src
-nohup npm run vite-dev > /tmp/storepulse-vite.log 2>&1 &
-VITE_PID=$!
 
-# Wait for Vite
-sleep 5
-if curl -s http://localhost:5173 > /dev/null 2>&1; then
-    echo "   ✅ Vite ready on http://localhost:5173"
-else
-    echo "❌ Vite failed"
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    echo "   ⚠️  node_modules not found, installing dependencies..."
+    npm install
+fi
+
+# Start Vite in background with explicit host binding
+# (we're already in src directory from the check above)
+nohup npx vite --host localhost --port 5173 > /tmp/storepulse-vite.log 2>&1 &
+VITE_PID=$!
+echo "   Vite PID: $VITE_PID"
+
+# Wait for Vite with more attempts and better checking
+echo "⏳ Waiting for Vite to start..."
+VITE_READY=false
+for i in {1..30}; do
+    sleep 1
+    if curl -s http://localhost:5173 > /dev/null 2>&1; then
+        echo "   ✅ Vite ready on http://localhost:5173"
+        VITE_READY=true
+        break
+    fi
+    # Check if process is still running
+    if ! kill -0 $VITE_PID 2>/dev/null; then
+        echo "   ❌ Vite process died. Check logs:"
+        tail -20 /tmp/storepulse-vite.log
+        kill $BACKEND_PID 2>/dev/null
+        exit 1
+    fi
+    # Show progress every 5 seconds
+    if [ $((i % 5)) -eq 0 ]; then
+        echo "   ⏳ Still waiting... ($i seconds)"
+    fi
+done
+
+if [ "$VITE_READY" = false ]; then
+    echo "❌ Vite failed to start after 30 seconds"
+    echo "   Check logs: tail -50 /tmp/storepulse-vite.log"
+    echo "   Last 20 lines:"
+    tail -20 /tmp/storepulse-vite.log
     kill $BACKEND_PID $VITE_PID 2>/dev/null
     exit 1
 fi

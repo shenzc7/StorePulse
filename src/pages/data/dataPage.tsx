@@ -43,6 +43,11 @@ export function DataPage() {
   const [isProSubmitting, setIsProSubmitting] = useState(false);
   const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const recordsCount = dataInsights?.total_records ?? 0;
+  const dataQualityScore = dataInsights?.data_quality_score ?? 0;
+  const dateRangeLabel = dataInsights?.date_range || 'No data yet';
+  const topRecommendations = dataInsights?.recommendations?.slice(0, 2) || [];
+  const hasRecords = recordsCount > 0;
   
   useEffect(() => {
     loadDataInsights();
@@ -304,31 +309,100 @@ export function DataPage() {
         </div>
       )}
       
-      {/* Data Quality Overview */}
-      <div className="card p-4 border-blue-200 bg-blue-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+      {/* Connected overview */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-semibold text-blue-900">Data Status</h3>
-              <p className="text-xs text-blue-700">
-                {dataInsights?.total_records || 0} records • Score based on completeness (need 90+ days for 100%)
-              </p>
+              <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Data readiness</p>
+              <h3 className="text-lg font-semibold text-ink-900">Live store dataset</h3>
+              <p className="text-xs text-ink-600">Used by Train, Forecast, and Reports</p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-20 h-2 bg-blue-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 transition-all duration-500 rounded-full"
-                style={{ width: `${dataInsights?.data_quality_score || 0}%` }}
-              ></div>
-            </div>
-            <span className="text-sm font-bold text-blue-700">
-              {dataInsights?.data_quality_score || 0}%
+            <span className={`badge ${hasRecords ? 'badge-success' : 'badge-warning'}`}>
+              {hasRecords ? 'Connected' : 'Needs data'}
             </span>
           </div>
+          <div className="flex items-end gap-4">
+            <div>
+              <p className="text-xs text-ink-500">Total records</p>
+              <p className="text-3xl font-black text-ink-900">{recordsCount}</p>
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-ink-500 mb-1">Data quality</p>
+              <div className="w-full bg-surface-200 rounded-full h-2">
+                <div
+                  className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${dataQualityScore}%` }}
+                ></div>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-sm font-semibold text-ink-900">{dataQualityScore}%</span>
+                <span className="text-xs text-ink-500">Range: {dateRangeLabel}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Pipeline</p>
+            <span className="badge badge-primary">Live</span>
+          </div>
+          <div className="space-y-3">
+            {[
+              { label: 'Store Data', status: hasRecords ? 'Ready for model training' : 'Add data to continue', href: '/data' },
+              { label: 'Train Models', status: 'Uses this dataset', href: '/train' },
+              { label: 'Forecast', status: 'Refresh after training', href: '/forecast' },
+              { label: 'Reports', status: 'Compare forecast vs actuals', href: '/reports' },
+            ].map((step) => (
+              <a
+                key={step.label}
+                href={step.href}
+                className="flex items-center justify-between p-3 rounded-xl bg-surface-100 hover:bg-surface-200 transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-ink-900">{step.label}</p>
+                  <p className="text-xs text-ink-600">{step.status}</p>
+                </div>
+                <svg className="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Recommendations snapshot</p>
+            <span className="badge badge-neutral">Live</span>
+          </div>
+          <div className="space-y-2">
+            {topRecommendations.length > 0 ? (
+              topRecommendations.map((rec, index) => (
+                <div key={index} className="p-3 rounded-lg border border-border bg-surface-50 text-sm text-ink-800">
+                  {rec}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-ink-600">We will surface recommendations once data is uploaded.</p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-4">
+            <a href="#recommendations" className="btn-secondary text-xs">View all</a>
+            <a href="#quick-entry" className="btn-primary text-xs">Add data</a>
+          </div>
+        </div>
+      </section>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Data signals</p>
+          <h2 className="text-lg font-semibold text-ink-900">Live metrics from your dataset</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <a href="#quick-entry" className="btn-secondary text-xs">Quick entry</a>
+          <a href="#bulk-import" className="btn-secondary text-xs">Bulk import</a>
         </div>
       </div>
       
@@ -393,45 +467,66 @@ export function DataPage() {
       
       {/* Recommendations and Gaps */}
       {dataInsights && (dataInsights.recommendations.length > 0 || dataInsights.gaps.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {dataInsights.recommendations.length > 0 && (
-            <div className="card p-6 border border-border">
-              <h3 className="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Recommendations
-              </h3>
-              <div className="space-y-2">
-                {dataInsights.recommendations.map((rec, index) => (
-                  <div key={index} className="flex items-start gap-2 text-sm">
-                    <div className="w-1 h-1 rounded-full bg-ink-600 mt-2 flex-shrink-0"></div>
-                    <span className="text-ink-700">{rec}</span>
-                  </div>
-                ))}
-              </div>
+        <section id="recommendations" className="card p-6 border border-border">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Recommendations</p>
+              <h3 className="text-lg font-semibold text-ink-900">Make the data useful across the app</h3>
+              <p className="text-sm text-ink-600">Apply these before retraining or reading forecasts.</p>
             </div>
-          )}
-          
-          {dataInsights.gaps.length > 0 && (
-            <div className="card p-6 border border-border">
-              <h3 className="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                Areas for Improvement
-              </h3>
-              <div className="space-y-2">
-                {dataInsights.gaps.map((gap, index) => (
-                  <div key={index} className="flex items-start gap-2 text-sm">
-                    <div className="w-1 h-1 rounded-full bg-ink-600 mt-2 flex-shrink-0"></div>
-                    <span className="text-ink-700">{gap}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <a href="/train" className="btn-secondary text-xs">Open Train</a>
+              <a href="/forecast" className="btn-primary text-xs">See Forecast</a>
             </div>
-          )}
-        </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {dataInsights.recommendations.length > 0 && (
+              <div className="p-5 rounded-xl border border-border bg-surface-50">
+                <h4 className="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Actionable recommendations
+                </h4>
+                <div className="space-y-2">
+                  {dataInsights.recommendations.map((rec, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-accent-500 mt-2 flex-shrink-0"></div>
+                      <span className="text-ink-700">{rec}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <a href="#quick-entry" className="btn-secondary text-xs">Add missing days</a>
+                  <a href="#bulk-import" className="btn-secondary text-xs">Upload history</a>
+                </div>
+              </div>
+            )}
+            
+            {dataInsights.gaps.length > 0 && (
+              <div className="p-5 rounded-xl border border-border bg-surface-50">
+                <h4 className="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Areas for improvement
+                </h4>
+                <div className="space-y-2">
+                  {dataInsights.gaps.map((gap, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm">
+                      <div className="w-1.5 h-1.5 rounded-full bg-warning-500 mt-2 flex-shrink-0"></div>
+                      <span className="text-ink-700">{gap}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <a href="/train" className="btn-secondary text-xs">Retrain after fixes</a>
+                  <a href="/reports" className="btn-secondary text-xs">Monitor variance</a>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
       )}
       
       {/* Recent Data Preview */}
@@ -469,7 +564,7 @@ export function DataPage() {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Entry Card */}
-        <section className="card p-6">
+        <section id="quick-entry" className="card p-6">
           <div className="mb-6">
             <h2 className="text-sm font-bold text-ink-900 mb-1 flex items-center gap-2">
               <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -714,7 +809,7 @@ export function DataPage() {
         </section>
         
         {/* File Upload Card */}
-        <section className="card p-6">
+        <section id="bulk-import" className="card p-6">
           <div className="mb-6">
             <h2 className="text-sm font-bold text-ink-900 mb-1 flex items-center gap-2">
               <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
