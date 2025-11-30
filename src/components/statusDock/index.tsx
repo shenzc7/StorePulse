@@ -13,15 +13,16 @@ export function StatusDock({ items }: StatusDockProps) {
   const getToneBadge = (tone?: string) => {
     switch (tone) {
       case 'success':
-        return 'badge-success';
+        return 'text-success';
       case 'warning':
-        return 'badge-warning';
+        return 'text-warning';
       case 'danger':
-        return 'badge-danger';
+        return 'text-danger';
       default:
-        return 'badge-neutral';
+        return 'text-ink';
     }
   };
+
   return (
     <section
       aria-label="Status overview"
@@ -30,13 +31,15 @@ export function StatusDock({ items }: StatusDockProps) {
       {items.map((item) => (
         <article
           key={item.id}
-          className="stat-card group"
+          className="card p-5 group hover:border-border-strong transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-ink-600 uppercase tracking-wide">{item.label}</span>
-            {item.icon}
+            <span className="text-xs font-medium text-ink-muted uppercase tracking-wide">{item.label}</span>
+            <div className="text-ink-faint group-hover:text-ink transition-colors">
+              {item.icon}
+            </div>
           </div>
-          <p className={`text-xl font-semibold text-ink-900 ${item.tone ? getToneBadge(item.tone) : ''}`}>
+          <p className={`text-xl font-semibold ${item.tone ? getToneBadge(item.tone) : 'text-ink'}`}>
             {item.value}
           </p>
         </article>

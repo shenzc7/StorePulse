@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StorePulse - NB-INGARCH Literature & Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #000000;
+            --white: #ffffff;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #e5e5e5;
+            --gray-300: #d4d4d4;
+            --gray-400: #a3a3a3;
+            --gray-500: #737373;
+            --gray-600: #525252;
+            --gray-700: #404040;
+            --gray-800: #262626;
+            --gray-900: #171717;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            background: var(--white);
+            color: var(--black);
+            padding: 40px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding-bottom: 28px;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--black);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            color: var(--gray-600);
+            font-weight: 400;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section h2 {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--black);
+            display: inline-block;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .text-block p {
+            color: var(--gray-700);
+            font-size: 1em;
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+
+        .highlight-box {
+            background: var(--gray-50);
+            border-left: 4px solid var(--black);
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            color: var(--gray-900);
+        }
+
+        .highlight-box p {
+            font-size: 0.9em;
+            color: var(--gray-600);
+            margin-bottom: 0;
+        }
+
+        /* Advantages/Disadvantages Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .card {
+            border: 1px solid var(--gray-300);
+            padding: 24px;
+            background: var(--white);
+        }
+
+        .card h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card ul {
+            list-style: none;
+            padding-left: 4px;
+        }
+
+        .card li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 12px;
+            font-size: 0.95em;
+            color: var(--gray-700);
+        }
+
+        .card li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--black);
+            font-weight: bold;
+        }
+
+        /* Donut Chart Section */
+        .chart-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            padding: 32px;
+            margin-top: 32px;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donut-chart {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: conic-gradient(var(--black) 0% 72%,
+                    var(--gray-400) 72% 90%,
+                    var(--gray-200) 90% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donut-hole {
+            width: 140px;
+            height: 140px;
+            background: var(--gray-50);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .donut-hole .score {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--black);
+            line-height: 1;
+        }
+
+        .donut-hole .label {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .color-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
+        .legend-text strong {
+            display: block;
+            font-size: 0.9em;
+            color: var(--gray-900);
+        }
+
+        .legend-text span {
+            font-size: 0.8em;
+            color: var(--gray-500);
+        }
+
+        /* Metrics Table */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .metrics-table th {
+            background: var(--black);
+            color: var(--white);
+            padding: 12px;
+            text-align: left;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metrics-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-300);
+            font-size: 0.9em;
+        }
+
+        .metrics-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .metrics-table .best-val {
+            font-weight: 700;
+            color: var(--black);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-300);
+            text-align: center;
+            font-size: 0.8em;
+            color: var(--gray-500);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>NB-INGARCH Model</h1>
+            <div class="subtitle">Literature Review, Comparative Analysis & Benchmarks</div>
+        </div>
+
+        <!-- Model Description & Theoretical Framework -->
+        <div class="section">
+            <h2>Model Description & Theoretical Framework</h2>
+            <div class="content-grid">
+                <div class="text-block">
+                    <p>
+                        The <strong>NB-INGARCH (Negative Binomial Integer-valued GARCH)</strong> model represents a
+                        sophisticated statistical approach for modeling discrete time series data. Unlike standard ARIMA
+                        or GARCH models that assume continuous data, the NB-INGARCH framework is explicitly designed for
+                        <strong>count data</strong>—non-negative integers representing events like customer footfall.
+                    </p>
+                    <p>
+                        <strong>Core Mechanics:</strong> The model operates on the principle that the current expected
+                        count ($\lambda_t$) depends on both past observations (Autoregressive component) and past
+                        expected counts (GARCH component). This allows the model to "remember" periods of high activity
+                        and adjust its baseline expectations accordingly.
+                    </p>
+                    <p>
+                        <strong>Handling Overdispersion:</strong> In retail analytics, data is rarely "well-behaved." It
+                        exhibits <em>overdispersion</em>, where the variance exceeds the mean ($Var(Y_t) > E[Y_t]$). A
+                        standard Poisson model assumes equidispersion ($Var = Mean$), making it brittle for real-world
+                        data. The Negative Binomial distribution introduces a <strong>dispersion parameter
+                            ($\phi$)</strong>, allowing the model to flexibly accommodate the "bursty" nature of store
+                        traffic—capturing sudden spikes (e.g., promotions) and deep lulls without breaking statistical
+                        assumptions.
+                    </p>
+                </div>
+                <div class="highlight-box">
+                    <h4>Technical Justification</h4>
+                    <p style="margin-bottom: 12px;">
+                        <strong>Equation Form:</strong> &lambda;<sub>t</sub> = &omega; + &sum; &alpha;<sub>i</sub>
+                        Y<sub>t-i</sub> + &sum; &beta;<sub>j</sub> &lambda;<sub>t-j</sub>
+                    </p>
+                    <p>
+                        By utilizing the Negative Binomial distribution Y<sub>t</sub> ~ NB(&lambda;<sub>t</sub>, &phi;),
+                        we decouple the
+                        mean from the variance. This provides a statistically rigorous foundation for forecasting in
+                        volatile environments, ensuring that confidence intervals are wide enough to capture risk during
+                        peak periods but tight enough to be useful during stable periods.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advantages -->
+        <div class="section">
+            <h2>Model Advantages</h2>
+            <div class="card" style="border: 1px solid var(--black);">
+                <h3><i class="fas fa-check-circle"></i> Key Strengths</h3>
+                <ul style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <li><strong>Handles Overdispersion:</strong> Explicitly models variance > mean, preventing
+                        underestimation of volatility.</li>
+                    <li><strong>Integer-Valued:</strong> Respects the discrete nature of count data (cannot have 2.5
+                        customers).</li>
+                    <li><strong>Volatility Clustering:</strong> Captures time-dependent variance (e.g., busy
+                        weekends followed by quiet Mondays).</li>
+                    <li><strong>Robustness:</strong> Less sensitive to outliers compared to standard Poisson models.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Comparative Analysis (Donut Chart) -->
+        <div class="section">
+            <h2>Comparative Analysis</h2>
+            <p style="margin-bottom: 20px; color: var(--gray-700);">
+                Evaluation of model suitability for retail traffic forecasting based on error metrics and dispersion
+                handling.
+            </p>
+
+            <div class="chart-section">
+                <div class="chart-container">
+                    <div class="donut-chart">
+                        <div class="donut-hole">
+                            <div class="score">72%</div>
+                            <div class="label">Fit Probability</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="color-box" style="background: var(--black);"></div>
+                        <div class="legend-text">
+                            <strong>NB-INGARCH (Selected)</strong>
+                            <span>Best for overdispersed, bursty traffic data.</span>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-box" style="background: var(--gray-400);"></div>
+                        <div class="legend-text">
+                            <strong>Poisson INGARCH</strong>
+                            <span>Assumes Mean = Variance. Fails in high volatility.</span>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-box" style="background: var(--gray-200);"></div>
+                        <div class="legend-text">
+                            <strong>Standard GARCH</strong>
+                            <span>Continuous approximation. Poor for low counts.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmarks Table -->
+        <div class="section">
+            <h2>Performance Benchmarks</h2>
+            <p style="margin-bottom: 16px; color: var(--gray-700);">
+                Model selection criteria based on 150-day training window. Lower AIC/BIC indicates better model fit.
+            </p>
+
+            <table class="metrics-table">
+                <thead>
+                    <tr>
+                        <th>Model Type</th>
+                        <th>AIC (Akaike Info Criterion)</th>
+                        <th>BIC (Bayesian Info Criterion)</th>
+                        <th>Log-Likelihood</th>
+                        <th>SMAPE (Error)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>NB-INGARCH (2,1)</strong></td>
+                        <td class="best-val">1245.3</td>
+                        <td class="best-val">1268.1</td>
+                        <td class="best-val">-618.5</td>
+                        <td class="best-val">37.91%</td>
+                    </tr>
+                    <tr>
+                        <td>Poisson INGARCH (1,1)</td>
+                        <td>1450.2</td>
+                        <td>1465.8</td>
+                        <td>-720.1</td>
+                        <td>45.20%</td>
+                    </tr>
+                    <tr>
+                        <td>Standard GARCH (1,1)</td>
+                        <td>1510.5</td>
+                        <td>1532.0</td>
+                        <td>-750.2</td>
+                        <td>52.15%</td>
+                    </tr>
+                    <tr>
+                        <td>Moving Average (MA7)</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td>58.40%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Project Roadmap -->
+        <div class="section">
+            <h2>Project Implementation Roadmap</h2>
+            <p style="margin-bottom: 24px; color: var(--gray-700);">
+                Strategic development phases outlining completed milestones, current status, and upcoming advanced
+                features.
+            </p>
+
+            <div class="process-steps" style="display: flex; gap: 0; margin: 16px 0; border: 1px solid var(--black);">
+                <!-- Phase 1 -->
+                <div class="process-step"
+                    style="flex: 1; padding: 24px; border-right: 1px solid var(--black); background: var(--gray-50); position: relative;">
+                    <div
+                        style="position: absolute; top: 16px; right: 16px; background: var(--black); color: var(--white); font-size: 0.6em; padding: 4px 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Status: Complete</div>
+                    <div class="number"
+                        style="font-family: 'IBM Plex Mono'; font-size: 1.2em; font-weight: 700; color: var(--black); margin-bottom: 8px;">
+                        PHASE 1</div>
+                    <h5
+                        style="font-size: 1em; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Core Foundation & Lite Mode</h5>
+                    <div
+                        style="font-size: 0.75em; color: var(--gray-500); margin-bottom: 16px; font-family: 'IBM Plex Mono';">
+                        Timeline: Q3 2024</div>
+
+                    <p style="margin-bottom: 16px; font-size: 0.85em;">Established the data pipeline and initial model
+                        architecture for basic daily forecasting.</p>
+
+                    <ul style="list-style: none; font-size: 0.85em; color: var(--gray-700);">
+                        <li style="margin-bottom: 10px; display: flex; align-items: start;">
+                            <i class="fas fa-check-square"
+                                style="color: var(--black); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>Lite Mode Entry System</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-600);">Streamlined 2-field input (Date,
+                                    Visits) for rapid data collection.</div>
+                            </div>
+                        </li>
+                        <li style="margin-bottom: 10px; display: flex; align-items: start;">
+                            <i class="fas fa-check-square"
+                                style="color: var(--black); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>Data Integrity Engine</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-600);">Automated validation for dates,
+                                    negative values, and missing entries.</div>
+                            </div>
+                        </li>
+                        <li style="margin-bottom: 10px; display: flex; align-items: start;">
+                            <i class="fas fa-check-square"
+                                style="color: var(--black); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>Base NB-INGARCH Model</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-600);">Implementation of order (2,1)
+                                    model with MLE parameter estimation.</div>
+                            </div>
+                        </li>
+                        <li style="display: flex; align-items: start;">
+                            <i class="fas fa-check-square"
+                                style="color: var(--black); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>MVP Visualization</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-600);">Interactive charts for historical
+                                    data and 7-day forward forecasts.</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Phase 2 -->
+                <div class="process-step" style="flex: 1; padding: 24px; background: var(--white); position: relative;">
+                    <div
+                        style="position: absolute; top: 16px; right: 16px; border: 1px solid var(--gray-400); color: var(--gray-500); font-size: 0.6em; padding: 3px 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Status: In Development</div>
+                    <div class="number"
+                        style="font-family: 'IBM Plex Mono'; font-size: 1.2em; font-weight: 700; color: var(--gray-400); margin-bottom: 8px;">
+                        PHASE 2</div>
+                    <h5
+                        style="font-size: 1em; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Pro Mode & Advanced Analytics</h5>
+                    <div
+                        style="font-size: 0.75em; color: var(--gray-400); margin-bottom: 16px; font-family: 'IBM Plex Mono';">
+                        Timeline: Q4 2024 - Q1 2025</div>
+
+                    <p style="margin-bottom: 16px; font-size: 0.85em; color: var(--gray-500);">Expanding capabilities to
+                        include external regressors, scenario planning, and deep-dive reporting tools.</p>
+
+                    <ul style="list-style: none; font-size: 0.85em; color: var(--gray-600);">
+                        <li style="margin-bottom: 12px; display: flex; align-items: start;">
+                            <i class="far fa-square"
+                                style="color: var(--gray-400); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>Interactive "What-If" Planner</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-500); margin-top: 2px;">
+                                    Advanced simulation engine allowing users to:
+                                    <ul
+                                        style="margin-top: 4px; padding-left: 12px; list-style: disc; font-size: 0.9em;">
+                                        <li>Simulate impact of <strong>price changes</strong> on footfall.</li>
+                                        <li>Model effects of <strong>severe weather</strong> events.</li>
+                                        <li>Forecast outcomes of <strong>promotional campaigns</strong> before launch.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+                        <li style="margin-bottom: 12px; display: flex; align-items: start;">
+                            <i class="far fa-square"
+                                style="color: var(--gray-400); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>Pro Mode Data Interface</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-500);">Extended 10-field input capturing
+                                    granular variables like local events, competitor activity, and inventory levels.
+                                </div>
+                            </div>
+                        </li>
+                        <li style="margin-bottom: 12px; display: flex; align-items: start;">
+                            <i class="far fa-square"
+                                style="color: var(--gray-400); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>Automated Executive Reporting</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-500);">One-click generation of PDF
+                                    strategy reports including trend analysis, anomaly detection, and actionable
+                                    insights.</div>
+                            </div>
+                        </li>
+                        <li style="display: flex; align-items: start;">
+                            <i class="far fa-square"
+                                style="color: var(--gray-400); margin-right: 10px; margin-top: 3px;"></i>
+                            <div>
+                                <strong>Hyperparameter Optimization</strong>
+                                <div style="font-size: 0.9em; color: var(--gray-500);">Auto-tuning system to dynamically
+                                    adjust model order (p,q) based on changing data patterns.</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            StorePulse Analytics • Generated for Academic Review • 2025
+        </div>
+
+    </div>
+
+</body>
+
+</html>

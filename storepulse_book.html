@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StorePulse: The Holy Grail Book</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'neutral',
+            fontFamily: 'Inter'
+        });
+    </script>
+    <style>
+        /* Import Fonts: Inter (Headings), Merriweather (Body), JetBrains Mono (Code) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --primary: #0f172a;
+            /* Deep Slate */
+            --accent: #2563eb;
+            /* Royal Blue */
+            --text: #334155;
+            /* Slate 700 */
+            --bg: #f1f5f9;
+            /* Light Gray Background for Screen */
+            --paper: #ffffff;
+            /* White Paper */
+            --code-bg: #f8fafc;
+            --border: #e2e8f0;
+            --note-bg: #f0f9ff;
+            --note-border: #0ea5e9;
+            --warn-bg: #fffbeb;
+            --warn-border: #f59e0b;
+            --tip-bg: #f0fdf4;
+            --tip-border: #22c55e;
+        }
+
+        body {
+            font-family: 'Merriweather', serif;
+            /* Classic Book Feel */
+            font-size: 11pt;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+            margin: 0;
+            padding: 2rem 0;
+            text-align: justify;
+            /* Justified text for book look */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* A4 Sheet Style (Google Docs style) */
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 2rem auto;
+            /* Gap between sheets */
+            background: var(--paper);
+            padding: 20mm 25mm;
+            /* Inner margins */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            /* Prevent overflow */
+        }
+
+        /* A4 Page Setup for Print */
+        @page {
+            size: A4;
+            margin: 25mm 20mm;
+
+            /* Generous margins */
+            @top-center {
+                content: "StorePulse Documentation";
+                font-family: 'Inter', sans-serif;
+                font-size: 9pt;
+                color: #94a3b8;
+            }
+
+            @bottom-center {
+                content: counter(page);
+                font-family: 'Inter', sans-serif;
+                font-size: 10pt;
+                font-weight: bold;
+            }
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Inter', sans-serif;
+            /* Modern Headings */
+            color: var(--primary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 28pt;
+            font-weight: 800;
+            letter-spacing: -1px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 20pt;
+            font-weight: 700;
+            margin-top: 3rem;
+            border-left: 4px solid var(--accent);
+            padding-left: 15px;
+        }
+
+        h3 {
+            font-size: 16pt;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        p {
+            margin-bottom: 1.2rem;
+        }
+
+        /* Chapter Title Page Style */
+        .chapter-title {
+            text-align: right;
+            font-size: 12pt;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #64748b;
+            margin-bottom: 5px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Cover Page - Premium Dark Theme */
+        .cover-page {
+            height: 100%;
+            /* Fill the sheet */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            /* Left align for modern look */
+            text-align: left;
+            padding: 3rem;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            position: relative;
+            overflow: hidden;
+            color: white;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Decorative Elements */
+        .cover-page::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cover-badge {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+            color: #94a3b8;
+            backdrop-filter: blur(10px);
+        }
+
+        .cover-title {
+            font-size: 56pt;
+            color: #ffffff;
+            margin-bottom: 0;
+            border: none;
+            letter-spacing: -3px;
+            line-height: 1;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .cover-subtitle {
+            font-family: 'Merriweather', serif;
+            font-style: italic;
+            font-size: 16pt;
+            color: #94a3b8;
+            font-weight: 300;
+            margin-top: 1rem;
+            margin-bottom: 4rem;
+            max-width: 60%;
+        }
+
+        .cover-line {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
+            margin: 2rem 0;
+        }
+
+        .cover-meta {
+            margin-top: auto;
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .cover-meta strong {
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        /* TOC */
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dotted #cbd5e1;
+            padding: 0.8rem 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .toc-item a {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .toc-item span {
+            color: #64748b;
+        }
+
+        /* Callout Boxes */
+        .box {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .note,
+        .tip,
+        .warn {
+            padding: 1.2rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+        }
+
+        .note {
+            background: var(--note-bg);
+            border-left: 4px solid var(--note-border);
+        }
+
+        .note strong {
+            color: var(--note-border);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .tip {
+            background: var(--tip-bg);
+            border-left: 4px solid var(--tip-border);
+        }
+
+        .tip strong {
+            color: var(--tip-border);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .warn {
+            background: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+        }
+
+        .warn strong {
+            color: var(--warn-border);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code & Tables */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border);
+            padding: 0.8rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        /* Diagrams */
+        .mermaid {
+            text-align: center;
+            margin: 3rem 0;
+        }
+
+        /* Screenshots */
+        .screenshot-box {
+            width: 100%;
+            height: 220px;
+            border: 2px dashed #cbd5e1;
+            background: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #94a3b8;
+            margin: 2rem 0;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Print Overrides */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .sheet {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                min-height: auto;
+                page-break-after: always;
+                /* Force page break after each sheet */
+            }
+
+            .cover-page {
+                height: 100vh;
+                margin: 0;
+                width: 100%;
+            }
+
+            a {
+                text-decoration: none;
+                color: inherit;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SHEET 1: COVER PAGE -->
+    <div class="sheet" style="padding: 0; overflow: hidden;">
+        <div class="cover-page">
+            <div class="cover-badge">Official Documentation</div>
+
+            <h1 class="cover-title">STORE<br>PULSE</h1>
+            <div class="cover-subtitle">The Holy Grail Guide to Intelligent Retail Forecasting using NB-INGARCH.</div>
+
+            <div class="cover-line"></div>
+
+            <div class="cover-meta">
+                <p><strong>DEVELOPED & WRITTEN BY SHENZ</strong></p>
+                <p>CrystalCore Labs • 2025</p>
+                <p>v1.0 • Confidential</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHEET 2: TABLE OF CONTENTS -->
+    <div class="sheet">
+        <div class="chapter-title">Reference</div>
+        <h1>Table of Contents</h1>
+
+        <div class="box" style="border: none; box-shadow: none;">
+            <div class="toc-item"><a href="#intro">1. Introduction</a> <span>Pg 3</span></div>
+            <div class="toc-item"><a href="#problem">2. The Problem Statement</a> <span>Pg 4</span></div>
+            <div class="toc-item"><a href="#data">3. The Data Engine</a> <span>Pg 5</span></div>
+            <div class="toc-item"><a href="#workflow">4. Complete Workflow</a> <span>Pg 8</span></div>
+            <div class="toc-item"><a href="#theory">5. Theory: NB-INGARCH</a> <span>Pg 10</span></div>
+            <div class="toc-item"><a href="#architecture">6. System Architecture</a> <span>Pg 14</span></div>
+            <div class="toc-item"><a href="#ui">7. UI Walkthrough</a> <span>Pg 16</span></div>
+            <div class="toc-item"><a href="#install">8. Installation</a> <span>Pg 20</span></div>
+            <div class="toc-item"><a href="#demo">9. Demo Script</a> <span>Pg 21</span></div>
+            <div class="toc-item"><a href="#code">10. Code Logic</a> <span>Pg 23</span></div>
+            <div class="toc-item"><a href="#scenarios">11. Real Scenarios</a> <span>Pg 25</span></div>
+            <div class="toc-item"><a href="#viva">12. Viva Question Bank</a> <span>Pg 26</span></div>
+            <div class="toc-item"><a href="#glossary">13. Glossary</a> <span>Pg 32</span></div>
+        </div>
+    </div>
+
+    <!-- SHEET 3: INTRODUCTION -->
+    <div class="sheet">
+        <div id="intro"></div>
+        <div class="chapter-title">Chapter 1</div>
+        <h1>What is StorePulse?</h1>
+
+        <p><strong>StorePulse is a crystal ball for retail managers.</strong></p>
+
+        <p>Imagine running a bustling supermarket. Every night, you face the same dilemma: <em>"How many staff do I need
+                tomorrow?"</em> It is a delicate balancing act. If you underestimate, customers face long queues,
+            frustration mounts, and sales are lost. If you overestimate, staff stand idle, and operational costs balloon
+            unnecessarily.</p>
+
+        <p>StorePulse solves this fundamental inefficiency. It is a sophisticated desktop application that leverages
+            <strong>Artificial Intelligence (NB-INGARCH)</strong> to predict daily footfall with high precision for the
+            upcoming 7-14 days.
+        </p>
+
+        <div class="note">
+            <strong>In Simple Terms</strong>
+            StorePulse analyzes historical patterns and contextual factors—like holidays, weekends, and weather—to
+            accurately forecast future demand.
+        </div>
+
+        <h3>Key Features</h3>
+        <ul>
+            <li><strong>Accurate Forecasts:</strong> Generates daily footfall predictions for the next 1-2 weeks.</li>
+            <li><strong>Staffing Recommendations:</strong> Translates numbers into actionable advice (e.g., "Hire 3
+                cashiers").</li>
+            <li><strong>Inventory Alerts:</strong> Proactively warns of potential stockouts before high-traffic days.
+            </li>
+            <li><strong>Privacy First:</strong> Operates 100% offline on your local machine. No cloud dependency.</li>
+        </ul>
+    </div>
+
+    <!-- SHEET 4: PROBLEM STATEMENT -->
+    <div class="sheet">
+        <div id="problem"></div>
+        <div class="chapter-title">Chapter 2</div>
+        <h1>Why Forecasting Fails</h1>
+
+        <p>Most retailers rely on "gut feeling" or simplistic averages. This approach is fundamentally flawed due to the
+            complex nature of retail data.</p>
+
+        <div class="box">
+            <h3>1. The "Average" Trap</h3>
+            <p><em>"On average, we get 100 people on Mondays."</em></p>
+            <p><strong>Reality:</strong> One Monday was a holiday (200 people). The next was rainy (50 people). The
+                mathematical average is 125, but you rarely see exactly 125 people. Relying on the average guarantees
+                you are wrong most of the time.</p>
+        </div>
+
+        <div class="box">
+            <h3>2. The "Chaos" Factor (Overdispersion)</h3>
+            <p>Retail data is inherently <strong>messy</strong>. The variance—the swing between highs and lows—is often
+                much larger than the mean. Standard statistical models like Poisson assume data is calm and predictable.
+                Retail data is not; it is volatile.</p>
+        </div>
+
+        <h3>Why NB-INGARCH is the Solution</h3>
+        <p>We selected the <strong>Negative Binomial INGARCH</strong> model because it is purpose-built for this
+            specific challenge:</p>
+        <ol>
+            <li><strong>Count Data:</strong> It respects that customer counts are non-negative integers (you can't have
+                3.5 people).</li>
+            <li><strong>High Variance:</strong> It explicitly models "overdispersion," handling the chaos that breaks
+                other models.</li>
+            <li><strong>Memory:</strong> It utilizes autoregression, remembering that a busy yesterday often implies a
+                busy today.</li>
+        </ol>
+
+        <div class="mermaid">
+            graph LR
+            A["Raw Data"] --> B{"Is it messy?"}
+            B -- Yes --> C["Standard Models Fail"]
+            B -- Yes --> D["StorePulse Thrives"]
+            D --> E["Accurate Staffing"]
+            D --> F["Happy Customers"]
+        </div>
+    </div>
+
+    <!-- SHEET 5: DATA ENGINE -->
+    <div class="sheet">
+        <div id="data"></div>
+        <div class="chapter-title">Chapter 3</div>
+        <h1>The Data Engine</h1>
+
+        <h3>1. Minimal Data Requirements</h3>
+        <p>StorePulse is designed to be lightweight. It requires only a simple CSV file with two columns:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>event_date</th>
+                    <th>visits</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2023-01-01</td>
+                    <td>145</td>
+                </tr>
+                <tr>
+                    <td>2023-01-02</td>
+                    <td>98</td>
+                </tr>
+                <tr>
+                    <td>2023-01-03</td>
+                    <td>112</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tip">
+            <strong>Simplicity is Key</strong>
+            Just the date and the count. The system automatically derives all other necessary features.
+        </div>
+
+        <h3>2. Feature Engineering (The "Brain")</h3>
+        <p>From raw inputs, StorePulse constructs a rich feature set:</p>
+
+        <div class="box">
+            <h4>A. Lags (Memory)</h4>
+            <p><strong>Concept:</strong> "If 100 people came last Monday, expect around 100 this Monday."</p>
+            <p><strong>Technical:</strong> Autoregressive Terms (Lag-1, Lag-7).</p>
+        </div>
+
+        <div class="box">
+            <h4>B. Calendar Context</h4>
+            <p><strong>Concept:</strong> "Is it a weekend? Is it payday? Is it a holiday?"</p>
+            <p><strong>Technical:</strong> Exogenous Variables (Dummy variables for DOW, Holiday, Payday).</p>
+        </div>
+
+        <h3>3. Data Validation (The "Bouncer")</h3>
+        <p>The system enforces strict quality gates before processing:</p>
+        <ul>
+            <li><strong>Missing Values:</strong> Automatically imputed using local moving averages.</li>
+            <li><strong>Negative Numbers:</strong> Flagged as errors (counts cannot be negative).</li>
+            <li><strong>Zeroes:</strong> Treated as closed days or anomalies depending on context.</li>
+        </ul>
+    </div>
+
+    <!-- SHEET 6: WORKFLOW -->
+    <div class="sheet">
+        <div id="workflow"></div>
+        <div class="chapter-title">Chapter 4</div>
+        <h1>Complete Workflow</h1>
+
+        <div class="mermaid">
+            graph TD
+            A["User upload data"] --> B["Validation Engine"]
+            B -- error --> C["shows<br>error<br>message"]
+            B -- success --> D["Database<br>(SQLite)"]
+            D -- Output --> H["Display<br>forecast"]
+            D --> E["feature<br>engineering"]
+            E --> F["Model training<br>(NB-INGARCH)"]
+            F --> G["Model artifact<br>(.joblib file)"]
+            G --> D
+            H --> I["Report<br>export"]
+        </div>
+
+        <h3>Step 1: Ingestion</h3>
+        <p>The user drags and drops a CSV file. The system parses and validates the schema instantly.</p>
+
+        <h3>Step 2: Enrichment</h3>
+        <p>The data is cleaned, and "Brain" features (Lags, Rolling Means, Holiday flags) are generated.</p>
+
+        <h3>Step 3: Training</h3>
+        <p>The NB-INGARCH model optimizes its parameters ($\beta, \alpha, \gamma$) to fit the historical patterns using
+            Maximum Likelihood Estimation.</p>
+
+        <h3>Step 4: Forecasting</h3>
+        <p>The model projects daily footfall for the next 14 days, providing:</p>
+        <ul>
+            <li><strong>P50 (Expected):</strong> The most likely outcome.</li>
+            <li><strong>P10/P90 (Confidence Interval):</strong> The safety net (Best vs. Worst case).</li>
+        </ul>
+
+        <h3>Step 5: Actionable Insight</h3>
+        <p>Predictions are converted into business logic:</p>
+        <ul>
+            <li>"150 people expected" $\rightarrow$ <strong>"Hire 3 staff."</strong></li>
+            <li>"High variance detected" $\rightarrow$ <strong>"Increase safety stock."</strong></li>
+        </ul>
+    </div>
+
+    <!-- SHEET 7a: THEORY PART 1 -->
+    <div class="sheet">
+        <div id="theory"></div>
+        <div class="chapter-title">Chapter 5</div>
+        <h1>Theory: NB-INGARCH</h1>
+
+        <div class="warn">
+            <strong>Viva Critical</strong>
+            This chapter contains the core theoretical justification for the project. Read carefully.
+        </div>
+
+        <h3>1. Nomenclature</h3>
+        <ul>
+            <li><strong>NB:</strong> Negative Binomial (The Probability Distribution).</li>
+            <li><strong>IN:</strong> Integer-valued (Discrete counts: 1, 2, 3...).</li>
+            <li><strong>GARCH:</strong> Generalized Autoregressive Conditional Heteroskedasticity (Modeling time-varying
+                volatility).</li>
+        </ul>
+
+        <h3>2. The Case for Negative Binomial</h3>
+        <p><strong>Poisson</strong> is the standard model for count data but assumes <code>Mean = Variance</code>. In
+            retail, variance is typically much larger than the mean (Overdispersion). Using Poisson leads to
+            underestimated risk and understaffing. <strong>Negative Binomial</strong> introduces an extra parameter
+            ($\phi$) to explicitly model this chaos.</p>
+
+        <h3>3. The Governing Equations</h3>
+
+        <div class="box">
+            <h4>Equation 1: The Conditional Mean ($\mu_t$)</h4>
+            <p>Describes the expected number of customers.</p>
+            <p>$$\mu_t = \beta_0 + \sum \beta_i y_{t-i} + \sum \gamma_j x_{t,j}$$</p>
+            <ul>
+                <li>$\beta_0$: Baseline traffic.</li>
+                <li>$\beta_i$: Influence of past traffic (Autoregression).</li>
+                <li>$\gamma_j$: Impact of external factors (Holidays, Weather).</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SHEET 7b: THEORY PART 2 -->
+    <div class="sheet">
+        <div class="chapter-title">Chapter 5 (Continued)</div>
+
+        <div class="box">
+            <h4>Equation 2: The Conditional Dispersion ($\phi_t$)</h4>
+            <p>Describes the volatility or "risk" of the day.</p>
+            <p>$$\phi_t = \alpha_0 + \sum \alpha_i \frac{\epsilon^2_{t-i}}{\mu_{t-i}}$$</p>
+            <ul>
+                <li>Captures clustering of volatility (e.g., a volatile holiday period).</li>
+            </ul>
+        </div>
+
+        <h3>4. Model Comparison</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>Suitability</th>
+                    <th>Limitations</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Moving Average</strong></td>
+                    <td>Stable, flat data</td>
+                    <td>Fails to react to sudden changes or trends.</td>
+                </tr>
+                <tr>
+                    <td><strong>ARIMA</strong></td>
+                    <td>Continuous data (Stocks)</td>
+                    <td>Can predict negative or fractional people.</td>
+                </tr>
+                <tr>
+                    <td><strong>LSTM</strong></td>
+                    <td>Big Data (Millions of rows)</td>
+                    <td>Requires massive datasets; overfits on small retail history.</td>
+                </tr>
+                <tr>
+                    <td><strong>NB-INGARCH</strong></td>
+                    <td><strong>Retail Counts</strong></td>
+                    <td><strong>The Optimal Choice.</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SHEET 8: ARCHITECTURE -->
+    <div class="sheet">
+        <div id="architecture"></div>
+        <div class="chapter-title">Chapter 6</div>
+        <h1>System Architecture</h1>
+
+        <h3>Technology Stack</h3>
+        <ul>
+            <li><strong>Frontend:</strong> React, TypeScript, Tailwind CSS.</li>
+            <li><strong>Backend:</strong> Python (FastAPI), NumPy, SciPy.</li>
+            <li><strong>Wrapper:</strong> Tauri (Desktop integration).</li>
+            <li><strong>Database:</strong> SQLite (Local storage).</li>
+        </ul>
+
+        <h3>Folder Structure</h3>
+
+        <div class="box">
+            <pre>
+StorePulse/
+├── api/                  # Python Backend
+│   ├── core/
+│   │   ├── forecast_service.py  # Logic Core
+│   │   └── db.py               # Database Handler
+│   └── routes/                 # API Endpoints
+├── ml/                   # Machine Learning
+│   └── train_ingarch.py        # NB-INGARCH Implementation
+├── src/                  # React Frontend
+│   ├── pages/
+│   │   ├── forecast/           # Visualization
+│   │   └── train/              # Model Training
+│   └── components/             # UI Library
+└── data/                 # Sample Datasets
+            </pre>
+        </div>
+
+        <h3>Data Flow</h3>
+        <ol>
+            <li><strong>React</strong> initiates request: <code>GET /forecast</code>.</li>
+            <li><strong>Tauri</strong> bridges request to Python backend.</li>
+            <li><strong>Python</strong> loads trained model artifact.</li>
+            <li><strong>Model</strong> computes predictions based on live features.</li>
+            <li><strong>Python</strong> returns JSON response.</li>
+            <li><strong>React</strong> renders visualization via <code>Recharts</code>.</li>
+        </ol>
+    </div>
+
+    <!-- SHEET 9a: UI WALKTHROUGH PART 1 -->
+    <div class="sheet">
+        <div id="ui"></div>
+        <div class="chapter-title">Chapter 7</div>
+        <h1>UI Walkthrough</h1>
+
+        <h3>1. The Dashboard</h3>
+        <p>Provides a high-level overview of store health, including total visits, average traffic, and immediate
+            alerts.</p>
+        <div class="screenshot-box" style="background: white; border: none;">
+            <img src="images/dashboard.png" alt="Dashboard" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+
+        <h3>2. Data Upload</h3>
+        <p>Drag-and-drop interface for CSV ingestion. Includes real-time schema validation feedback.</p>
+        <div class="screenshot-box" style="background: white; border: none;">
+            <img src="images/upload.png" alt="Upload Interface" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+    </div>
+
+    <!-- SHEET 9b: UI WALKTHROUGH PART 2 -->
+    <div class="sheet">
+        <div class="chapter-title">Chapter 7 (Continued)</div>
+
+        <h3>3. Forecast Visualization</h3>
+        <p>The central feature. Displays historical data alongside future predictions, bounded by confidence intervals
+            (shaded regions).</p>
+        <div class="screenshot-box" style="background: white; border: none;">
+            <img src="images/forecast.png" alt="Forecast Chart" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+
+        <h3>4. Insights Panel</h3>
+        <p>Translates statistical output into operational directives (Staffing levels, Inventory warnings).</p>
+        <div class="screenshot-box" style="background: white; border: none;">
+            <img src="images/actions.png" alt="Action Cards" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+    </div>
+
+    <!-- SHEET 10: INSTALLATION -->
+    <div class="sheet">
+        <div id="install"></div>
+        <div class="chapter-title">Chapter 8</div>
+        <h1>Installation & Running</h1>
+
+        <h3>Prerequisites</h3>
+        <ul>
+            <li>Node.js (v16+)</li>
+            <li>Python (v3.9+)</li>
+            <li>Rust (for Tauri build tools)</li>
+        </ul>
+
+        <h3>Quick Start</h3>
+
+        <div class="box">
+            <h4>1. Install Dependencies</h4>
+            <code>npm install</code><br>
+            <code>pip install -r requirements.txt</code>
+        </div>
+
+        <div class="box">
+            <h4>2. Launch Application</h4>
+            <code>npm run tauri dev</code>
+        </div>
+
+        <div class="tip">
+            <strong>Note:</strong> This command concurrently starts the React dev server and the Python backend process.
+        </div>
+
+        <h3>Troubleshooting</h3>
+        <ul>
+            <li><strong>"Backend not connecting":</strong> Ensure port 8000 is available.</li>
+            <li><strong>"Model not found":</strong> Navigate to the 'Train' page and execute a training run.</li>
+        </ul>
+    </div>
+
+    <!-- SHEET 11: DEMO SCRIPT -->
+    <div class="sheet">
+        <div id="demo"></div>
+        <div class="chapter-title">Chapter 9</div>
+        <h1>Demo Script (10 Minutes)</h1>
+
+        <p><strong>(Start on Dashboard)</strong></p>
+        <p>"Good morning. This is StorePulse, an intelligent retail forecasting suite designed to resolve staffing and
+            inventory inefficiencies in retail environments."</p>
+
+        <p><strong>(Navigate to 'Data')</strong></p>
+        <p>"We begin by ingesting historical footfall data. The system performs immediate validation, ensuring data
+            integrity—checking for anomalies or missing values. This enforces a 'garbage-in, gold-out' standard."</p>
+
+        <p><strong>(Navigate to 'Train')</strong></p>
+        <p>"This is the core innovation. Unlike traditional tools that use simple averages, we train a <strong>Negative
+                Binomial INGARCH</strong> model. This specifically addresses the high volatility and 'overdispersion'
+            inherent in retail. Note the speed of training."</p>
+
+        <p><strong>(Navigate to 'Forecast')</strong></p>
+        <p>"Here is the output. The blue line represents our prediction. The shaded region is our uncertainty band—our
+            safety net. Observe how it accurately captures the weekend spike; a simple average would have smoothed this
+            out, leading to understaffing."</p>
+
+        <p><strong>(Highlight Action Cards)</strong></p>
+        <p>"Finally, we move from data to decision. Based on a forecast of 150 visits, the system recommends 3 staff
+            members and alerts for perishable restocking. This closes the loop."</p>
+    </div>
+
+    <!-- SHEET 12: CODE LOGIC -->
+    <div class="sheet">
+        <div id="code"></div>
+        <div class="chapter-title">Chapter 10</div>
+        <h1>Code Logic</h1>
+
+        <h3><code>ml/train_ingarch.py</code></h3>
+        <p>The "Brain". Contains the <code>fit()</code> function which employs a Maximum Likelihood Optimizer. It
+            iteratively adjusts parameters to maximize the probability of the observed data given the model.</p>
+
+        <h3><code>api/core/forecast_service.py</code></h3>
+        <p>The "Manager". Implements the <code>ForecastService</code> class, handling:</p>
+        <ul>
+            <li><strong>Caching:</strong> Retrieves recent computations to reduce latency.</li>
+            <li><strong>Scenarios:</strong> Applies logic for "What-If" analysis (e.g., reducing forecast by 20% for
+                rain).</li>
+        </ul>
+
+        <h3><code>src/pages/forecast/forecastPage.tsx</code></h3>
+        <p>The "Artist". Uses <code>Recharts</code> to render SVG visualizations of the data. It also contains the
+            business logic for staffing rules (e.g., <code>if visits > 100 then staff = 3</code>).</p>
+    </div>
+
+    <!-- SHEET 13: SCENARIOS -->
+    <div class="sheet">
+        <div id="scenarios"></div>
+        <div class="chapter-title">Chapter 11</div>
+        <h1>Real Retail Scenarios</h1>
+
+        <div class="box">
+            <h3>Scenario 1: The Weekend Spike</h3>
+            <p><strong>Context:</strong> Saturdays typically see 2x the traffic of Mondays.</p>
+            <p><strong>Solution:</strong> The model learns a "Day of Week" multiplier, expecting the spike and
+                recommending doubled staffing levels.</p>
+        </div>
+
+        <div class="box">
+            <h3>Scenario 2: The Holiday Surprise</h3>
+            <p><strong>Context:</strong> A major holiday falls mid-week.</p>
+            <p><strong>Solution:</strong> The <code>is_holiday</code> feature activates. The model applies a learned
+                "Holiday Boost" coefficient ($\gamma$) to the forecast.</p>
+        </div>
+
+        <div class="box">
+            <h3>Scenario 3: The Rainy Day</h3>
+            <p><strong>Context:</strong> Forecast predicts high traffic, but heavy rain is expected.</p>
+            <p><strong>Solution:</strong> The manager uses the "What-If" toggle. The system applies a penalty factor,
+                lowering the forecast and reducing staff recommendations to save costs.</p>
+        </div>
+    </div>
+
+    <!-- SHEET 14a: VIVA BANK PART 1 -->
+    <div class="sheet">
+        <div id="viva"></div>
+        <div class="chapter-title">Chapter 12</div>
+        <h1>Viva Question Bank</h1>
+
+        <h3>Top 5 Critical Questions</h3>
+
+        <div class="box">
+            <p><strong>Q1: Why NB-INGARCH? Why not LSTM?</strong></p>
+            <p><strong>A:</strong> "LSTM is data-hungry, requiring millions of data points to converge. Retailers often
+                have limited history (1-2 years). NB-INGARCH is a statistical model that performs robustly on small
+                datasets and offers superior interpretability."</p>
+        </div>
+
+        <div class="box">
+            <p><strong>Q2: Define Overdispersion.</strong></p>
+            <p><strong>A:</strong> "Overdispersion occurs when the variance of a dataset exceeds its mean. In retail,
+                traffic swings wildly (e.g., 50 vs 200). Standard models assume constant variance. Our model explicitly
+                accounts for these swings."</p>
+        </div>
+
+        <div class="box">
+            <p><strong>Q3: How is the model validated?</strong></p>
+            <p><strong>A:</strong> "We utilize SMAPE (Symmetric Mean Absolute Percentage Error) for its stability with
+                low values. We also perform a 'Rolling Origin Backtest,' simulating past forecasts to verify accuracy."
+            </p>
+        </div>
+    </div>
+
+    <!-- SHEET 14b: VIVA BANK PART 2 -->
+    <div class="sheet">
+        <div class="chapter-title">Chapter 12 (Continued)</div>
+
+        <div class="box">
+            <p><strong>Q4: What does Lambda ($\lambda$) represent?</strong></p>
+            <p><strong>A:</strong> "In this context, Lambda represents the conditional mean—the expected number of
+                arrivals for a given time step, conditioned on past history and current features."</p>
+        </div>
+
+        <div class="box">
+            <p><strong>Q5: How are data errors handled?</strong></p>
+            <p><strong>A:</strong> "A validation layer intercepts data before processing. It checks for negatives, NaNs,
+                and missing dates, imputing missing values via local moving average to prevent model failure."</p>
+        </div>
+
+        <h3>Rapid Fire</h3>
+        <ul>
+            <li><strong>Frontend:</strong> React / TypeScript</li>
+            <li><strong>Backend:</strong> Python FastAPI</li>
+            <li><strong>Database:</strong> SQLite</li>
+            <li><strong>Charts:</strong> Recharts</li>
+            <li><strong>Styling:</strong> Tailwind CSS</li>
+            <li><strong>Seasonality:</strong> Day-of-Week dummy variables</li>
+        </ul>
+    </div>
+
+    <!-- SHEET 15: GLOSSARY -->
+    <div class="sheet">
+        <div id="glossary"></div>
+        <div class="chapter-title">Chapter 13</div>
+        <h1>Glossary</h1>
+
+        <dl>
+            <dt>NB-INGARCH</dt>
+            <dd>Negative Binomial Integer-valued Generalized Autoregressive Conditional Heteroskedasticity. The core
+                forecasting model.</dd>
+
+            <dt>Overdispersion</dt>
+            <dd>A statistical condition where the variance of a dataset is larger than its mean.</dd>
+
+            <dt>Exogenous Variable</dt>
+            <dd>External factors (Weather, Holidays) that influence the dependent variable (Visits).</dd>
+
+            <dt>SMAPE</dt>
+            <dd>Symmetric Mean Absolute Percentage Error. A robust accuracy metric.</dd>
+
+            <dt>Tauri</dt>
+            <dd>A framework for building secure, tiny, and fast binaries for all major desktop platforms.</dd>
+
+            <dt>FastAPI</dt>
+            <dd>A modern, high-performance web framework for building APIs with Python 3.7+.</dd>
+        </dl>
+
+        <div
+            style="margin-top: 5rem; text-align: center; color: #94a3b8; font-family: 'Inter', sans-serif; font-size: 10pt;">
+            <p>*** END OF DOCUMENT ***</p>
+            <p>StorePulse © 2025</p>
+        </div>
+    </div>
+
+</body>
+
+</html>
