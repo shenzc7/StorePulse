@@ -21,18 +21,18 @@ After creating the repository, GitHub will show you the repository URL. Use one 
 **If you created the repository as `StorePulse`:**
 ```bash
 cd /Users/shenzc/Desktop/projects/StorePulse
-git remote set-url origin https://github.com/nonshenz007/StorePulse.git
+git remote set-url origin https://github.com/shenzc7/StorePulse.git
 ```
 
 **Or if you want to add it as a new remote (keeping the old one):**
 ```bash
-git remote add storepulse https://github.com/nonshenz007/StorePulse.git
-git remote set-url origin https://github.com/nonshenz007/StorePulse.git
+git remote add storepulse https://github.com/shenzc7/StorePulse.git
+git remote set-url origin https://github.com/shenzc7/StorePulse.git
 ```
 
 **For SSH (if you have SSH keys set up):**
 ```bash
-git remote set-url origin git@github.com:nonshenz007/StorePulse.git
+git remote set-url origin git@github.com:shenzc7/StorePulse.git
 ```
 
 ## Step 3: Verify Remote
@@ -44,8 +44,8 @@ git remote -v
 
 You should see:
 ```
-origin  https://github.com/nonshenz007/StorePulse.git (fetch)
-origin  https://github.com/nonshenz007/StorePulse.git (push)
+origin  https://github.com/shenzc7/StorePulse.git (fetch)
+origin  https://github.com/shenzc7/StorePulse.git (push)
 ```
 
 ## Step 4: Push to GitHub
@@ -81,7 +81,7 @@ git push -u origin main
 If you get this error, remove the old remote first:
 ```bash
 git remote remove origin
-git remote add origin https://github.com/nonshenz007/StorePulse.git
+git remote add origin https://github.com/shenzc7/StorePulse.git
 ```
 
 ### Error: "failed to push some refs"
