@@ -25,6 +25,22 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/
 
 > **🎉 NEW**: The macOS installer has been completely fixed! It now resolves Python import errors, Tauri version mismatches, and Node.js PATH issues automatically. See [QUICK_INSTALL_MACOS.md](QUICK_INSTALL_MACOS.md) for details.
 
+### 🪟 Windows 10/11 - One Command Setup (Admin PowerShell)
+
+**Open PowerShell as Administrator and run:**
+
+```powershell
+powershell -ExecutionPolicy Bypass -NoLogo -NoProfile -Command "irm https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_WINDOWS.ps1 | iex"
+```
+
+**This single command will:**
+- ✅ Install Git, Python 3.11, Node.js 20 LTS, Rustup, C++ Build Tools, and WebView2 via winget
+- ✅ Clone the StorePulse repository to `~/StorePulse`
+- ✅ Create the Python virtual environment and install Python/Node dependencies
+- ✅ Add a desktop shortcut (“StorePulse”) that launches backend + frontend + Tauri together
+
+**Time:** 15-25 minutes depending on network speed and Visual Studio Build Tools install
+
 ---
 
 ### Manual Setup (All Platforms)
