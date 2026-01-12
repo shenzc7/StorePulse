@@ -139,15 +139,15 @@ cd "$PROJECT_DIR" || exit 1
 # Check for port conflicts
 echo ""
 echo "🔍 Checking for port conflicts..."
-if port_in_use 9000; then
-    echo "⚠️  Port 9000 is already in use. Attempting to free it..."
-    lsof -ti:9000 | xargs kill -9 2>/dev/null || true
+if port_in_use 9005; then
+    echo "⚠️  Port 9005 is already in use. Attempting to free it..."
+    lsof -ti:9005 | xargs kill -9 2>/dev/null || true
     sleep 2
 fi
 
-if port_in_use 5173; then
-    echo "⚠️  Port 5173 is already in use. Attempting to free it..."
-    lsof -ti:5173 | xargs kill -9 2>/dev/null || true
+if port_in_use 5174; then
+    echo "⚠️  Port 5174 is already in use. Attempting to free it..."
+    lsof -ti:5174 | xargs kill -9 2>/dev/null || true
     sleep 2
 fi
 

@@ -1,5 +1,5 @@
 {
-  "dataset": "/var/folders/mr/k56xtgss4jb13qczsw_6mbbr0000gn/T/storepulse_train_2il9ej09/lite_sample.csv",
+  "dataset": "/var/folders/mr/k56xtgss4jb13qczsw_6mbbr0000gn/T/storepulse_train_37m64iwl/pro_sample.csv",
   "rows": 335,
   "feature_cols": [
     "lag_1",
@@ -37,7 +37,7 @@
     "naive_smape": 19.367432274506175
   },
   "quality_gate": {
-    "applies": true,
+    "applies": false,
     "threshold_pct": 0.0,
     "lift_pct": -1.0102324395990852,
     "passed": true

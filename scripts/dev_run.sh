@@ -15,7 +15,7 @@ popd > /dev/null
 sleep 3
 
 # Start Python API server
-uvicorn api.main:app --reload --port 9000 &
+uvicorn api.main:app --reload --port 9005 &
 UVICORN_PID=$!
 
 # Start Tauri (which will connect to Vite dev server)

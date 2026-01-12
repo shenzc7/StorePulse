@@ -2,8 +2,8 @@
  * API utility for making requests to the StorePulse backend
  */
 
-const LOCAL_PRIMARY = 'http://localhost:9000';
-const LOCAL_SECONDARY = 'http://127.0.0.1:9000';
+const LOCAL_PRIMARY = 'http://localhost:9005';
+const LOCAL_SECONDARY = 'http://127.0.0.1:9005';
 
 let PRIMARY_BASE = '';
 let FALLBACK_BASE = LOCAL_PRIMARY;
@@ -126,9 +126,9 @@ async function requestWithFallback<T>({ endpoint, init }: FetchConfig): Promise<
       if (error instanceof Error) {
         const errorMsg = error.message?.toLowerCase() || '';
         if (errorMsg.includes('pattern') || errorMsg.includes('invalid url')) {
-          message = `Invalid API URL format. Tried: ${attemptedUrls.join(', ')}. Please ensure backend is running on port 9000.`;
+          message = `Invalid API URL format. Tried: ${attemptedUrls.join(', ')}. Please ensure backend is running on port 9005.`;
         } else if (errorMsg.includes('failed to fetch') || errorMsg.includes('networkerror')) {
-          message = `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9000.`;
+          message = `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9005.`;
         } else {
           message = error.message;
         }
@@ -143,7 +143,7 @@ async function requestWithFallback<T>({ endpoint, init }: FetchConfig): Promise<
   }
 
   const errorMessage = lastNetworkError?.message 
-    ?? `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9000.`;
+    ?? `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9005.`;
   
   throw {
     message: errorMessage,

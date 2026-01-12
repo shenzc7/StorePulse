@@ -29,6 +29,20 @@ class DataManagementSettings(BaseModel):
     anomaly_detection_threshold: float = Field(2.5, ge=1.0, le=5.0, description="Standard deviations for anomaly detection")
 
 
+class StaffingConfigSettings(BaseModel):
+    """Staffing configuration settings."""
+    customers_per_staff: int = Field(45, ge=1, le=200, description="Number of customers one staff member can handle")
+    high_traffic_threshold: int = Field(150, ge=50, le=1000, description="Daily visits threshold for high traffic status")
+    labor_cost_per_staff: int = Field(650, ge=100, le=5000, description="Daily cost per staff member (INR)")
+
+
+class InventoryConfigSettings(BaseModel):
+    """Inventory configuration settings."""
+    conversion_rate: float = Field(0.18, ge=0.01, le=1.0, description="Expected conversion rate from visits to sales")
+    high_risk_visits: int = Field(180, ge=50, le=2000, description="Daily visits threshold for high risk/stockout")
+    medium_risk_visits: int = Field(120, ge=30, le=1000, description="Daily visits threshold for medium risk")
+
+
 class AutomationSettings(BaseModel):
     """Automation and scheduling settings."""
     auto_forecast_enabled: bool = Field(False, description="Enable automatic daily forecasts")
@@ -66,6 +80,8 @@ class QualityGatesSettings(BaseModel):
 class ApplicationSettings(BaseModel):
     """Complete application settings model."""
     nb_ingarch_config: ModelConfigSettings
+    staffing_config: StaffingConfigSettings
+    inventory_config: InventoryConfigSettings
     data_management: DataManagementSettings
     automation: AutomationSettings
     system_monitoring: SystemMonitoringSettings
@@ -87,6 +103,8 @@ class ApplicationSettings(BaseModel):
 
 SECTION_MODEL_MAP = {
     "nb_ingarch_config": ModelConfigSettings,
+    "staffing_config": StaffingConfigSettings,
+    "inventory_config": InventoryConfigSettings,
     "data_management": DataManagementSettings,
     "automation": AutomationSettings,
     "system_monitoring": SystemMonitoringSettings,
@@ -118,6 +136,16 @@ async def get_all_settings() -> Dict[str, Any]:
                 "cache_ttl_seconds": 3600,
                 "min_training_samples": 60,
                 "training_timeout_seconds": 300
+            },
+            "staffing_config": {
+                "customers_per_staff": 45,
+                "high_traffic_threshold": 150,
+                "labor_cost_per_staff": 650
+            },
+            "inventory_config": {
+                "conversion_rate": 0.18,
+                "high_risk_visits": 180,
+                "medium_risk_visits": 120
             },
             "data_management": {
                 "data_retention_days": 365,
@@ -171,7 +199,7 @@ async def update_settings(request: UpdateSettingsRequest) -> Dict[str, str]:
     try:
         # Validate section name
         valid_sections = {
-            "nb_ingarch_config", "data_management", "automation", "system_monitoring",
+            "nb_ingarch_config", "staffing_config", "inventory_config", "data_management", "automation", "system_monitoring",
             "advanced_config", "quality_gates", "auto_run"
         }
 
@@ -264,6 +292,16 @@ async def reset_section_settings(section: str) -> Dict[str, str]:
                 "cache_ttl_seconds": 3600,
                 "min_training_samples": 60,
                 "training_timeout_seconds": 300
+            },
+            "staffing_config": {
+                "customers_per_staff": 45,
+                "high_traffic_threshold": 150,
+                "labor_cost_per_staff": 650
+            },
+            "inventory_config": {
+                "conversion_rate": 0.18,
+                "high_risk_visits": 180,
+                "medium_risk_visits": 120
             },
             "data_management": {
                 "data_retention_days": 365,

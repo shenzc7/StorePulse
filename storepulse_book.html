@@ -396,14 +396,14 @@
             <div class="cover-badge">Official Documentation</div>
 
             <h1 class="cover-title">STORE<br>PULSE</h1>
-            <div class="cover-subtitle">The Holy Grail Guide to Intelligent Retail Forecasting using NB-INGARCH.</div>
+            <div class="cover-subtitle">The Complete Learner's Guide to Intelligent Retail Forecasting.</div>
 
             <div class="cover-line"></div>
 
             <div class="cover-meta">
                 <p><strong>DEVELOPED & WRITTEN BY SHENZ</strong></p>
-                <p>CrystalCore Labs • 2025</p>
-                <p>v1.0 • Confidential</p>
+                <p>CrystalCore Labs • 2026</p>
+                <p>v1.0.1 • Confidential</p>
             </div>
         </div>
     </div>
@@ -421,12 +421,13 @@
             <div class="toc-item"><a href="#theory">5. Theory: NB-INGARCH</a> <span>Pg 10</span></div>
             <div class="toc-item"><a href="#architecture">6. System Architecture</a> <span>Pg 14</span></div>
             <div class="toc-item"><a href="#ui">7. UI Walkthrough</a> <span>Pg 16</span></div>
-            <div class="toc-item"><a href="#install">8. Installation</a> <span>Pg 20</span></div>
-            <div class="toc-item"><a href="#demo">9. Demo Script</a> <span>Pg 21</span></div>
-            <div class="toc-item"><a href="#code">10. Code Logic</a> <span>Pg 23</span></div>
-            <div class="toc-item"><a href="#scenarios">11. Real Scenarios</a> <span>Pg 25</span></div>
-            <div class="toc-item"><a href="#viva">12. Viva Question Bank</a> <span>Pg 26</span></div>
-            <div class="toc-item"><a href="#glossary">13. Glossary</a> <span>Pg 32</span></div>
+            <div class="toc-item"><a href="#lab">8. The Lab: What-If Planner</a> <span>Pg 20</span></div>
+            <div class="toc-item"><a href="#reports">9. Reports Center</a> <span>Pg 23</span></div>
+            <div class="toc-item"><a href="#install">10. Installation & Running</a> <span>Pg 25</span></div>
+            <div class="toc-item"><a href="#demo">11. Demo Script</a> <span>Pg 28</span></div>
+            <div class="toc-item"><a href="#code">12. Code Logic</a> <span>Pg 30</span></div>
+            <div class="toc-item"><a href="#viva">13. Viva Question Bank</a> <span>Pg 34</span></div>
+            <div class="toc-item"><a href="#glossary">14. Glossary</a> <span>Pg 40</span></div>
         </div>
     </div>
 
@@ -457,11 +458,11 @@
         <h3>Key Features</h3>
         <ul>
             <li><strong>Accurate Forecasts:</strong> Generates daily footfall predictions for the next 1-2 weeks.</li>
-            <li><strong>Staffing Recommendations:</strong> Translates numbers into actionable advice (e.g., "Hire 3
-                cashiers").</li>
-            <li><strong>Inventory Alerts:</strong> Proactively warns of potential stockouts before high-traffic days.
-            </li>
-            <li><strong>Privacy First:</strong> Operates 100% offline on your local machine. No cloud dependency.</li>
+            <li><strong>Smart Staffing:</strong> Translates numbers into actionable advice (e.g., "Hire 3 cashiers").</li>
+            <li><strong>Pro Mode Scenarios:</strong> Simulate "What-If" situations like promotions or competitors in The Lab.</li>
+            <li><strong>Inventory Alerts:</strong> Proactively warns of stockouts before high-traffic days.</li>
+            <li><strong>Professional Reports:</strong> One-click PDF generation for executive presentations.</li>
+            <li><strong>Privacy First:</strong> Operates 100% offline on your local machine using SQLite.</li>
         </ul>
     </div>
 
@@ -588,7 +589,8 @@
             E --> F["Model training<br>(NB-INGARCH)"]
             F --> G["Model artifact<br>(.joblib file)"]
             G --> D
-            H --> I["Report<br>export"]
+            H --> I["Report<br>Center"]
+            H --> J["The Lab<br>(What-If)"]
         </div>
 
         <h3>Step 1: Ingestion</h3>
@@ -640,7 +642,7 @@
             retail, variance is typically much larger than the mean (Overdispersion). Using Poisson leads to
             underestimated risk and understaffing. <strong>Negative Binomial</strong> introduces an extra parameter
             ($\phi$) to explicitly model this chaos.</p>
-
+        
         <h3>3. The Governing Equations</h3>
 
         <div class="box">
@@ -732,7 +734,9 @@ StorePulse/
 ├── src/                  # React Frontend
 │   ├── pages/
 │   │   ├── forecast/           # Visualization
-│   │   └── train/              # Model Training
+│   │   ├── train/              # Model Training
+│   │   ├── lab/                # What-If Planner
+│   │   └── reports/            # PDF Generation
 │   └── components/             # UI Library
 └── data/                 # Sample Datasets
             </pre>
@@ -787,76 +791,137 @@ StorePulse/
         </div>
     </div>
 
-    <!-- SHEET 10: INSTALLATION -->
+    <!-- SHEET 10: THE LAB -->
+    <div class="sheet">
+        <div id="lab"></div>
+        <div class="chapter-title">Chapter 8</div>
+        <h1>The Lab: What-If Planner</h1>
+
+        <p><strong style="color: var(--accent);">New Feature in v1.0.1:</strong> The Lab allows you to simulate the future before it happens.</p>
+        
+        <p>Retail is unpredictable. StorePulse empowers you to ask "What If?" and get scientific answers.</p>
+
+        <h3>Scenario Builder</h3>
+        <p>Create custom scenarios to test business strategies:</p>
+        
+        <div class="box">
+            <ul>
+                <li><strong>Promotions:</strong> "What if we run a 20% discount campaign?" &rarr; (Boost traffic by X%)</li>
+                <li><strong>Weather:</strong> "What if it rains all weekend?" &rarr; (Reduce traffic by Y%)</li>
+                <li><strong>Competitors:</strong> "What if a new store opens nearby?" &rarr; (Long-term impact)</li>
+            </ul>
+        </div>
+
+        <h3>Quick Scenarios</h3>
+        <p>Pre-configured templates for common situations like "Mega Sale", "Monsoon Season", or "Payday Weekend".</p>
+        
+        <div class="tip">
+            <strong>Impact Analysis:</strong> The Lab breaks down impact into:
+            <ul>
+                <li><strong>Staffing Impact:</strong> +2 Cashiers needed.</li>
+                <li><strong>Inventory Impact:</strong> +50 units of Milk required.</li>
+                <li><strong>Revenue Potential:</strong> Estimated lift in visits.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SHEET 11: REPORTS CENTER -->
+    <div class="sheet">
+        <div id="reports"></div>
+        <div class="chapter-title">Chapter 9</div>
+        <h1>Reports Center</h1>
+
+        <p>Turn data into professional documents. The Reports Center allows you to generate PDF reports suitable for board meetings and stakeholder updates.</p>
+
+        <h3>Report Types</h3>
+        <ul>
+            <li><strong>Executive Summary:</strong> High-level overview of performance and key metrics.</li>
+            <li><strong>Staffing Rosters:</strong> Detailed daily charts for HR planning.</li>
+            <li><strong>Inventory Manifests:</strong> Expected demand lists for supply chain teams.</li>
+        </ul>
+
+        <div class="box">
+            <h4>How to Generate</h4>
+            <ol>
+                <li>Navigate to the <strong>Reports</strong> tab.</li>
+                <li>Select your desired report type.</li>
+                <li>Click <strong>Generate PDF</strong>.</li>
+                <li>The file is saved locally to your `Downloads` or `StorePulse/reports` folder.</li>
+            </ol>
+        </div>
+        
+        <p><strong>Note:</strong> Reports include auto-generated charts, heatmaps, and textual summaries powered by the analysis engine.</p>
+    </div>
+
+    <!-- SHEET 12: INSTALLATION -->
     <div class="sheet">
         <div id="install"></div>
-        <div class="chapter-title">Chapter 8</div>
+        <div class="chapter-title">Chapter 10</div>
         <h1>Installation & Running</h1>
 
         <h3>Prerequisites</h3>
         <ul>
-            <li>Node.js (v16+)</li>
-            <li>Python (v3.9+)</li>
-            <li>Rust (for Tauri build tools)</li>
+            <li>A modern computer (macOS, Windows, or Linux).</li>
+            <li>Internet connection (for initial setup only).</li>
         </ul>
 
-        <h3>Quick Start</h3>
+        <h3>Quick Start (Automated)</h3>
 
         <div class="box">
-            <h4>1. Install Dependencies</h4>
-            <code>npm install</code><br>
-            <code>pip install -r requirements.txt</code>
+            <h4>🍎 macOS Users</h4>
+            <p>Open Terminal and run this single command:</p>
+            <code>bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"</code>
+            <p style="margin-top: 0.5rem; font-size: 0.9em; color: #64748b;">This handles Python, Node.js, and dependencies automatically.</p>
         </div>
 
         <div class="box">
-            <h4>2. Launch Application</h4>
-            <code>npm run tauri dev</code>
+            <h4>🪟 Windows Users</h4>
+            <p>Open PowerShell as Administrator and run:</p>
+            <code>powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_WINDOWS.ps1 | iex"</code>
         </div>
 
         <div class="tip">
-            <strong>Note:</strong> This command concurrently starts the React dev server and the Python backend process.
+            <strong>Success!</strong> The application will launch automatically once the setup script completes.
         </div>
 
         <h3>Troubleshooting</h3>
         <ul>
-            <li><strong>"Backend not connecting":</strong> Ensure port 8000 is available.</li>
-            <li><strong>"Model not found":</strong> Navigate to the 'Train' page and execute a training run.</li>
+            <li><strong>"Backend not connecting":</strong> Ensure port 9000 (API) is not blocked by another app.</li>
+            <li><strong>"Model not found":</strong> You must train the model first. Go to 'Train' page &rarr; Click 'Train Model'.</li>
         </ul>
     </div>
 
-    <!-- SHEET 11: DEMO SCRIPT -->
+    <!-- SHEET 13: DEMO SCRIPT -->
     <div class="sheet">
         <div id="demo"></div>
-        <div class="chapter-title">Chapter 9</div>
+        <div class="chapter-title">Chapter 11</div>
         <h1>Demo Script (10 Minutes)</h1>
 
         <p><strong>(Start on Dashboard)</strong></p>
         <p>"Good morning. This is StorePulse, an intelligent retail forecasting suite designed to resolve staffing and
-            inventory inefficiencies in retail environments."</p>
+            inventory inefficiencies in retail environments via offline AI."</p>
 
         <p><strong>(Navigate to 'Data')</strong></p>
-        <p>"We begin by ingesting historical footfall data. The system performs immediate validation, ensuring data
-            integrity—checking for anomalies or missing values. This enforces a 'garbage-in, gold-out' standard."</p>
+        <p>"We begin by ingesting historical data. The system performs immediate validation—checking for anomalies like negative counts or missing dates. This enforces a 'garbage-in, gold-out' standard."</p>
 
         <p><strong>(Navigate to 'Train')</strong></p>
         <p>"This is the core innovation. Unlike traditional tools that use simple averages, we train a <strong>Negative
-                Binomial INGARCH</strong> model. This specifically addresses the high volatility and 'overdispersion'
-            inherent in retail. Note the speed of training."</p>
+                Binomial INGARCH</strong> model. This specifically addresses the 'overdispersion' inherent in retail. Note the speed—it trains in seconds."</p>
 
         <p><strong>(Navigate to 'Forecast')</strong></p>
-        <p>"Here is the output. The blue line represents our prediction. The shaded region is our uncertainty band—our
-            safety net. Observe how it accurately captures the weekend spike; a simple average would have smoothed this
-            out, leading to understaffing."</p>
+        <p>"Here is the output. The blue line is our prediction. The shaded region is our P10-P90 uncertainty band. Observe how it captures the weekend spike accurately."</p>
+        
+        <p><strong>(Navigate to 'The Lab')</strong></p>
+        <p>"Now, let's ask 'What If?'. Suppose we run a promotion next week. I'll slide the 'Promo Boost' to 20%. Look—the graph updates instantly, showing an expected 200 extra visits and recommending 2 additional staff members."</p>
 
-        <p><strong>(Highlight Action Cards)</strong></p>
-        <p>"Finally, we move from data to decision. Based on a forecast of 150 visits, the system recommends 3 staff
-            members and alerts for perishable restocking. This closes the loop."</p>
+        <p><strong>(Navigate to 'Reports')</strong></p>
+        <p>"Finally, we export this as a PDF for the board meeting. Done."</p>
     </div>
 
-    <!-- SHEET 12: CODE LOGIC -->
+    <!-- SHEET 14: CODE LOGIC -->
     <div class="sheet">
         <div id="code"></div>
-        <div class="chapter-title">Chapter 10</div>
+        <div class="chapter-title">Chapter 12</div>
         <h1>Code Logic</h1>
 
         <h3><code>ml/train_ingarch.py</code></h3>
@@ -867,50 +932,23 @@ StorePulse/
         <p>The "Manager". Implements the <code>ForecastService</code> class, handling:</p>
         <ul>
             <li><strong>Caching:</strong> Retrieves recent computations to reduce latency.</li>
-            <li><strong>Scenarios:</strong> Applies logic for "What-If" analysis (e.g., reducing forecast by 20% for
-                rain).</li>
+            <li><strong>Scenarios:</strong> Applies multipliers for "What-If" analysis in the Lab.</li>
         </ul>
 
-        <h3><code>src/pages/forecast/forecastPage.tsx</code></h3>
-        <p>The "Artist". Uses <code>Recharts</code> to render SVG visualizations of the data. It also contains the
-            business logic for staffing rules (e.g., <code>if visits > 100 then staff = 3</code>).</p>
+        <h3><code>src/pages/lab/labPage.tsx</code></h3>
+        <p>The "Simulator". This React component manages the interactive scenario builder. It maintains local state for slider values (Promo Boost, Weather) and sends real-time calculation requests to the backend.</p>
+
+        <h3><code>api/routes/reports.py</code></h3>
+        <p>The "Publisher". Uses Python's reportlab or weasyprint libraries to construct pixel-perfect PDF documents from the raw forecast JSON data.</p>
     </div>
 
-    <!-- SHEET 13: SCENARIOS -->
-    <div class="sheet">
-        <div id="scenarios"></div>
-        <div class="chapter-title">Chapter 11</div>
-        <h1>Real Retail Scenarios</h1>
-
-        <div class="box">
-            <h3>Scenario 1: The Weekend Spike</h3>
-            <p><strong>Context:</strong> Saturdays typically see 2x the traffic of Mondays.</p>
-            <p><strong>Solution:</strong> The model learns a "Day of Week" multiplier, expecting the spike and
-                recommending doubled staffing levels.</p>
-        </div>
-
-        <div class="box">
-            <h3>Scenario 2: The Holiday Surprise</h3>
-            <p><strong>Context:</strong> A major holiday falls mid-week.</p>
-            <p><strong>Solution:</strong> The <code>is_holiday</code> feature activates. The model applies a learned
-                "Holiday Boost" coefficient ($\gamma$) to the forecast.</p>
-        </div>
-
-        <div class="box">
-            <h3>Scenario 3: The Rainy Day</h3>
-            <p><strong>Context:</strong> Forecast predicts high traffic, but heavy rain is expected.</p>
-            <p><strong>Solution:</strong> The manager uses the "What-If" toggle. The system applies a penalty factor,
-                lowering the forecast and reducing staff recommendations to save costs.</p>
-        </div>
-    </div>
-
-    <!-- SHEET 14a: VIVA BANK PART 1 -->
+    <!-- SHEET 15a: VIVA BANK PART 1 -->
     <div class="sheet">
         <div id="viva"></div>
-        <div class="chapter-title">Chapter 12</div>
+        <div class="chapter-title">Chapter 13</div>
         <h1>Viva Question Bank</h1>
 
-        <h3>Top 5 Critical Questions</h3>
+        <h3>Top Critical Questions</h3>
 
         <div class="box">
             <p><strong>Q1: Why NB-INGARCH? Why not LSTM?</strong></p>
@@ -927,27 +965,24 @@ StorePulse/
         </div>
 
         <div class="box">
-            <p><strong>Q3: How is the model validated?</strong></p>
-            <p><strong>A:</strong> "We utilize SMAPE (Symmetric Mean Absolute Percentage Error) for its stability with
-                low values. We also perform a 'Rolling Origin Backtest,' simulating past forecasts to verify accuracy."
+            <p><strong>Q3: How does 'The Lab' work?</strong></p>
+            <p><strong>A:</strong> "It does not retrain the model. Instead, it applies conditioned multipliers to the baseline forecast. For example, a 'Rainy' scenario applies a weighted penalty coefficient (e.g., 0.8x) derived from historical correlation analysis."
             </p>
         </div>
     </div>
 
-    <!-- SHEET 14b: VIVA BANK PART 2 -->
+    <!-- SHEET 15b: VIVA BANK PART 2 -->
     <div class="sheet">
-        <div class="chapter-title">Chapter 12 (Continued)</div>
+        <div class="chapter-title">Chapter 13 (Continued)</div>
 
         <div class="box">
-            <p><strong>Q4: What does Lambda ($\lambda$) represent?</strong></p>
-            <p><strong>A:</strong> "In this context, Lambda represents the conditional mean—the expected number of
-                arrivals for a given time step, conditioned on past history and current features."</p>
+            <p><strong>Q4: Is the data really offline?</strong></p>
+            <p><strong>A:</strong> "Yes. We use an embedded SQLite database. No data is sent to any cloud server. The Python backend runs as a localhost server on the user's machine."</p>
         </div>
 
         <div class="box">
-            <p><strong>Q5: How are data errors handled?</strong></p>
-            <p><strong>A:</strong> "A validation layer intercepts data before processing. It checks for negatives, NaNs,
-                and missing dates, imputing missing values via local moving average to prevent model failure."</p>
+            <p><strong>Q5: What is Tauri?</strong></p>
+            <p><strong>A:</strong> "Tauri is a framework that wraps our React frontend and Python backend into a single installable application (.dmg or .exe), providing a native desktop experience with a tiny footprint."</p>
         </div>
 
         <h3>Rapid Fire</h3>
@@ -957,14 +992,14 @@ StorePulse/
             <li><strong>Database:</strong> SQLite</li>
             <li><strong>Charts:</strong> Recharts</li>
             <li><strong>Styling:</strong> Tailwind CSS</li>
-            <li><strong>Seasonality:</strong> Day-of-Week dummy variables</li>
+            <li><strong>Build Tool:</strong> Vite + Tauri</li>
         </ul>
     </div>
 
-    <!-- SHEET 15: GLOSSARY -->
+    <!-- SHEET 16: GLOSSARY -->
     <div class="sheet">
         <div id="glossary"></div>
-        <div class="chapter-title">Chapter 13</div>
+        <div class="chapter-title">Chapter 14</div>
         <h1>Glossary</h1>
 
         <dl>
@@ -984,14 +1019,14 @@ StorePulse/
             <dt>Tauri</dt>
             <dd>A framework for building secure, tiny, and fast binaries for all major desktop platforms.</dd>
 
-            <dt>FastAPI</dt>
-            <dd>A modern, high-performance web framework for building APIs with Python 3.7+.</dd>
+            <dt>The Lab</dt>
+            <dd>StorePulse's scenario planning tool for simulating business outcomes.</dd>
         </dl>
 
         <div
             style="margin-top: 5rem; text-align: center; color: #94a3b8; font-family: 'Inter', sans-serif; font-size: 10pt;">
             <p>*** END OF DOCUMENT ***</p>
-            <p>StorePulse © 2025</p>
+            <p>StorePulse © 2026</p>
         </div>
     </div>
 

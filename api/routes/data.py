@@ -237,8 +237,8 @@ async def get_data_insights() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Failed to generate insights: {str(e)}")
 
 
-@router.get("/export")
-async def export_all_data(format: str = Query("csv", regex="^(csv|json|xlsx)$")) -> Any:
+@router.get("/export_all")
+async def export_all_data(format: str = Query("csv", pattern="^(csv|json|xlsx)$")) -> Any:
     """Export all visitor data in specified format.
 
     Args:

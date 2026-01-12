@@ -17,7 +17,7 @@ class FeatureConfig:
     lags: tuple[int, ...] = (1, 2, 7, 14, 21, 30)
     holiday_calendar: Path | None = HOLIDAY_CSV_DEFAULT if HOLIDAY_CSV_DEFAULT.exists() else None
     categorical_columns: tuple[str, ...] = ("weather", "promo_type", "local_events")
-    numeric_columns: tuple[str, ...] = ("sales", "conversion", "price_change", "open_hours")
+    numeric_columns: tuple[str, ...] = ("price_change", "open_hours")
     binary_columns: tuple[str, ...] = ("paydays", "school_breaks")
 
 

@@ -19,7 +19,7 @@ cd "$(dirname "$0")"
 PROJECT_ROOT="$(pwd)"
 
 # Start backend
-echo "🖥️  Starting backend on port 9000..."
+echo "🖥️  Starting backend on port 9005..."
 if [ ! -d "api_venv" ]; then
     echo "❌ Run: ./scripts/bootstrap_env.sh first"
     exit 1
@@ -27,13 +27,13 @@ fi
 
 source api_venv/bin/activate
 export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
-nohup uvicorn api.main:app --host 0.0.0.0 --port 9000 --reload > /tmp/storepulse-backend.log 2>&1 &
+nohup uvicorn api.main:app --host 0.0.0.0 --port 9005 --reload > /tmp/storepulse-backend.log 2>&1 &
 BACKEND_PID=$!
 
 # Wait for backend
 sleep 3
-if curl -s http://localhost:9000/health > /dev/null 2>&1; then
-    echo "   ✅ Backend ready on http://localhost:9000"
+if curl -s http://localhost:9005/health > /dev/null 2>&1; then
+    echo "   ✅ Backend ready on http://localhost:9005"
 else
     echo "❌ Backend failed"
     kill $BACKEND_PID 2>/dev/null
@@ -41,7 +41,7 @@ else
 fi
 
 # Start Vite
-echo "🌐 Starting Vite dev server on port 5173..."
+echo "🌐 Starting Vite dev server on port 5174..."
 cd src
 
 # Check if node_modules exists
@@ -51,8 +51,9 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Start Vite in background with explicit host binding
-# (we're already in src directory from the check above)
-nohup npx vite --host localhost --port 5173 > /tmp/storepulse-vite.log 2>&1 &
+# Export PATH to ensure node/npm are found by nohup
+export PATH="/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:$PATH"
+nohup npm run vite-dev > /tmp/storepulse-vite.log 2>&1 &
 VITE_PID=$!
 echo "   Vite PID: $VITE_PID"
 
@@ -61,8 +62,8 @@ echo "⏳ Waiting for Vite to start..."
 VITE_READY=false
 for i in {1..30}; do
     sleep 1
-    if curl -s http://localhost:5173 > /dev/null 2>&1; then
-        echo "   ✅ Vite ready on http://localhost:5173"
+    if curl -s http://localhost:5174 > /dev/null 2>&1; then
+        echo "   ✅ Vite ready on http://localhost:5174"
         VITE_READY=true
         break
     fi

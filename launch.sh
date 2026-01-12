@@ -25,12 +25,12 @@ if [ ! -d "api_venv" ]; then
 fi
 
 source api_venv/bin/activate
-uvicorn api.main:app --host 127.0.0.1 --port 9000 &
+uvicorn api.main:app --host 127.0.0.1 --port 9005 &
 BACKEND_PID=$!
 
 # Wait for backend
 sleep 3
-if curl -s http://localhost:9000/health > /dev/null 2>&1; then
+if curl -s http://localhost:9005/health > /dev/null 2>&1; then
     echo "   ✅ Backend ready!"
 else
     echo "❌ Backend failed to start"

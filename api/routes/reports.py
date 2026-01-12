@@ -7,7 +7,21 @@ from typing import Dict, List, Any
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
+
+from ..core.report_service import ReportService
+from ..core.forecast_service import ForecastService
+from ..core.db import VisitRepository
+
 router = APIRouter(prefix="/reports", tags=["reports"])
+
+class ReportRequest(BaseModel):
+    mode: str = "lite"
+    days: int = 14
+    title: str = "Strategic Demand Forecast"
+
 
 
 def format_file_size(size_bytes: int) -> str:
@@ -183,3 +197,34 @@ async def download_report(category: str, filename: str) -> FileResponse:
         raise HTTPException(status_code=404, detail="Report not found")
 
     return FileResponse(path=str(file_path), filename=filename)
+@router.post("/generate")
+async def generate_report(request: ReportRequest) -> Dict[str, str]:
+    """Generate a new PDF report based on current forecast data."""
+    try:
+        # Initialize services
+        reports_dir = Path(__file__).resolve().parents[2] / "reports" / "exports"
+        report_service = ReportService(reports_dir)
+        forecast_service = ForecastService()
+        
+        # Get real forecast data
+        forecast_data = forecast_service.forecast(
+            horizon_days=request.days, 
+            mode=request.mode
+        )
+        
+        # Generate filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"Forecast_Report_{request.mode.upper()}_{timestamp}.pdf"
+        
+        # Generate PDF
+        file_path = report_service.generate_pdf(forecast_data, filename)
+        
+        return {
+            "status": "success",
+            "filename": filename,
+            "path": f"/reports/exports/{filename}",
+            "download_url": f"/api/reports/download/exports/{filename}"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")

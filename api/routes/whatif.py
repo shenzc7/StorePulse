@@ -135,6 +135,13 @@ async def analyze_scenarios(request: WhatIfRequest) -> Dict[str, List[ScenarioRe
             horizon_days=horizon_days,
             mode=mode
         )
+        
+        # Check if baseline forecast was successful
+        if baseline_forecast.get("status") != "success" or "predictions" not in baseline_forecast:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Please train a model first. {baseline_forecast.get('message', 'No forecast data available')}"
+            )
 
         results = []
 
@@ -149,16 +156,23 @@ async def analyze_scenarios(request: WhatIfRequest) -> Dict[str, List[ScenarioRe
                 mode=mode,
                 scenario_config=scenario_dict
             )
+            
+            # Check if scenario forecast was successful
+            if scenario_forecast.get("status") != "success" or "predictions" not in scenario_forecast:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Scenario analysis failed: {scenario_forecast.get('message', 'Unknown error')}"
+                )
 
             # Calculate deltas from baseline
             forecast_deltas = []
             for i in range(horizon_days):
-                baseline_visits = baseline_forecast["forecast"][i]["p50"]
-                scenario_visits = scenario_forecast["forecast"][i]["p50"]
+                baseline_visits = baseline_forecast["predictions"][i]["predicted_visits"]
+                scenario_visits = scenario_forecast["predictions"][i]["predicted_visits"]
                 delta_pct = ((scenario_visits - baseline_visits) / baseline_visits * 100) if baseline_visits > 0 else 0
 
                 forecast_deltas.append({
-                    "date": baseline_forecast["forecast"][i]["date"],
+                    "date": baseline_forecast["predictions"][i]["date"],
                     "baseline_visits": baseline_visits,
                     "scenario_visits": scenario_visits,
                     "delta": scenario_visits - baseline_visits,

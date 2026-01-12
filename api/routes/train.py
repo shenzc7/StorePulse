@@ -427,6 +427,11 @@ async def _prepare_dataset(request: Request) -> PreparedDataset:
         try:
             import pandas as pd
             df = pd.read_csv(dataset_path)
+            
+            # Normalize date column name
+            if "date" in df.columns and "event_date" not in df.columns:
+                df = df.rename(columns={"date": "event_date"})
+                
             if len(df) < 30:
                 tempdir.cleanup()
                 raise HTTPException(

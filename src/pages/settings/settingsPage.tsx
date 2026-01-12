@@ -18,6 +18,18 @@ interface DataManagement {
   anomaly_detection_threshold: number;
 }
 
+interface StaffingConfig {
+  customers_per_staff: number;
+  high_traffic_threshold: number;
+  labor_cost_per_staff: number;
+}
+
+interface InventoryConfig {
+  conversion_rate: number;
+  high_risk_visits: number;
+  medium_risk_visits: number;
+}
+
 interface Automation {
   auto_forecast_enabled: boolean;
   auto_forecast_time: string;
@@ -64,6 +76,8 @@ interface SystemHealth {
 
 interface AppSettings {
   nb_ingarch_config: ModelConfig;
+  staffing_config: StaffingConfig;
+  inventory_config: InventoryConfig;
   data_management: DataManagement;
   automation: Automation;
   system_monitoring: SystemMonitoring;
@@ -90,7 +104,7 @@ export function SettingsPage() {
     const minutes = Math.min(59, Math.max(0, parseInt(match[2], 10)));
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
-  
+
   useEffect(() => {
     loadSettings();
     loadSystemHealth();
@@ -134,23 +148,23 @@ export function SettingsPage() {
       setSaving(section);
       setError(null);
       setSuccessMessage(null);
-      
+
       const payload =
         section === 'automation'
           ? {
-              ...newSettings,
-              auto_forecast_time: normalizeTime(newSettings?.auto_forecast_time),
-            }
+            ...newSettings,
+            auto_forecast_time: normalizeTime(newSettings?.auto_forecast_time),
+          }
           : newSettings;
 
       await apiPut(`/api/settings/`, { section, settings: payload });
 
       setSettings(prev => prev ? { ...prev, [section]: payload } : null);
-      
+
       if (section === 'auto_run') {
         localStorage.setItem('storepulse_auto_run', newSettings.toString());
       }
-      
+
       setSuccessMessage(`${section.replace('_', ' ')} updated successfully`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
@@ -271,9 +285,9 @@ export function SettingsPage() {
                 <div className="text-xs text-ink-600 mb-1">CPU Usage</div>
                 <div className="text-lg font-semibold text-ink-900">{systemHealth.system.cpu_percent.toFixed(1)}%</div>
                 <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
-                  <div 
+                  <div
                     className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
-                    style={{width: `${Math.min(systemHealth.system.cpu_percent, 100)}%`}}
+                    style={{ width: `${Math.min(systemHealth.system.cpu_percent, 100)}%` }}
                   ></div>
                 </div>
               </div>
@@ -281,9 +295,9 @@ export function SettingsPage() {
                 <div className="text-xs text-ink-600 mb-1">Memory</div>
                 <div className="text-lg font-semibold text-ink-900">{systemHealth.system.memory_percent.toFixed(1)}%</div>
                 <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
-                  <div 
+                  <div
                     className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
-                    style={{width: `${Math.min(systemHealth.system.memory_percent, 100)}%`}}
+                    style={{ width: `${Math.min(systemHealth.system.memory_percent, 100)}%` }}
                   ></div>
                 </div>
               </div>
@@ -291,9 +305,9 @@ export function SettingsPage() {
                 <div className="text-xs text-ink-600 mb-1">Disk Usage</div>
                 <div className="text-lg font-semibold text-ink-900">{systemHealth.system.disk_usage.toFixed(1)}%</div>
                 <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
-                  <div 
+                  <div
                     className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
-                    style={{width: `${Math.min(systemHealth.system.disk_usage, 100)}%`}}
+                    style={{ width: `${Math.min(systemHealth.system.disk_usage, 100)}%` }}
                   ></div>
                 </div>
               </div>
@@ -493,6 +507,187 @@ export function SettingsPage() {
                 <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
               </div>
             </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Business Logic Configuration */}
+      <div className="bg-white border border-border rounded-lg">
+        <div className="border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-ink-900">Business Logic</h2>
+              <p className="text-sm text-ink-600 mt-1">Operational parameters for actionable insights</p>
+            </div>
+            {(saving === 'staffing_config' || saving === 'inventory_config') && (
+              <div className="flex items-center gap-2 text-sm text-ink-500">
+                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
+                <span>Saving...</span>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="p-6 space-y-8">
+
+          {/* Staffing Logic */}
+          <div>
+            <h3 className="text-sm font-semibold text-ink-900 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              Staffing Recommendations
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-ink-900 mb-2">
+                  Customers per Staff
+                </label>
+                <input
+                  type="number"
+                  value={settings.staffing_config?.customers_per_staff ?? 45}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 1) {
+                      updateSetting('staffing_config', {
+                        ...settings.staffing_config,
+                        customers_per_staff: value
+                      });
+                    }
+                  }}
+                  min={1}
+                  disabled={saving === 'staffing_config'}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-ink-500 mt-1.5">How many customers can one staff member handle?</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ink-900 mb-2">
+                  High Traffic Threshold
+                </label>
+                <input
+                  type="number"
+                  value={settings.staffing_config?.high_traffic_threshold ?? 150}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 10) {
+                      updateSetting('staffing_config', {
+                        ...settings.staffing_config,
+                        high_traffic_threshold: value
+                      });
+                    }
+                  }}
+                  min={10}
+                  disabled={saving === 'staffing_config'}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger "High Traffic" status</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ink-900 mb-2">
+                  Labor Cost per Staff (₹)
+                </label>
+                <input
+                  type="number"
+                  value={settings.staffing_config?.labor_cost_per_staff ?? 650}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 0) {
+                      updateSetting('staffing_config', {
+                        ...settings.staffing_config,
+                        labor_cost_per_staff: value
+                      });
+                    }
+                  }}
+                  min={0}
+                  disabled={saving === 'staffing_config'}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-ink-500 mt-1.5">Daily cost estimate for one staff member</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-6">
+            <h3 className="text-sm font-semibold text-ink-900 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+              Inventory Alerts
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-ink-900 mb-2">
+                  Conversion Rate
+                </label>
+                <input
+                  type="number"
+                  value={settings.inventory_config?.conversion_rate ?? 0.18}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (value >= 0.01 && value <= 1.0) {
+                      updateSetting('inventory_config', {
+                        ...settings.inventory_config,
+                        conversion_rate: value
+                      });
+                    }
+                  }}
+                  step={0.01}
+                  min={0.01}
+                  max={1.0}
+                  disabled={saving === 'inventory_config'}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-ink-500 mt-1.5">Expected ratio of visits to sales (0.01 - 1.0)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ink-900 mb-2">
+                  Medium Risk Threshold
+                </label>
+                <input
+                  type="number"
+                  value={settings.inventory_config?.medium_risk_visits ?? 120}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 1) {
+                      updateSetting('inventory_config', {
+                        ...settings.inventory_config,
+                        medium_risk_visits: value
+                      });
+                    }
+                  }}
+                  min={1}
+                  disabled={saving === 'inventory_config'}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger "Medium Risk" alert</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ink-900 mb-2">
+                  High Risk Threshold
+                </label>
+                <input
+                  type="number"
+                  value={settings.inventory_config?.high_risk_visits ?? 180}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 1) {
+                      updateSetting('inventory_config', {
+                        ...settings.inventory_config,
+                        high_risk_visits: value
+                      });
+                    }
+                  }}
+                  min={1}
+                  disabled={saving === 'inventory_config'}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+                />
+                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger "High Risk" alert</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -840,97 +1035,97 @@ export function SettingsPage() {
         <div className="border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-ink-900">Advanced Configuration</h2>
-              {saving === 'advanced_config' && (
-                <div className="flex items-center gap-2 text-sm text-ink-500">
-                  <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
-                  <span>Saving...</span>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">Logging Level</label>
-              <select
-                value={settings.advanced_config.logging_level}
-                onChange={(e) => updateSetting('advanced_config', {
-                  ...settings.advanced_config,
-                  logging_level: e.target.value
-                })}
-                disabled={saving === 'advanced_config'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              >
-                <option value="DEBUG">Debug</option>
-                <option value="INFO">Info</option>
-                <option value="WARNING">Warning</option>
-                <option value="ERROR">Error</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">DB Pool Size</label>
-                <input
-                  type="number"
-                  value={settings.advanced_config.database_pool_size}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 1 && value <= 20) {
-                      updateSetting('advanced_config', {
-                        ...settings.advanced_config,
-                        database_pool_size: value
-                      });
-                    }
-                  }}
-                  min={1}
-                  max={20}
-                  disabled={saving === 'advanced_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
+            {saving === 'advanced_config' && (
+              <div className="flex items-center gap-2 text-sm text-ink-500">
+                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
+                <span>Saving...</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">API Timeout (s)</label>
-                <input
-                  type="number"
-                  value={settings.advanced_config.api_timeout_seconds}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 10 && value <= 300) {
-                      updateSetting('advanced_config', {
-                        ...settings.advanced_config,
-                        api_timeout_seconds: value
-                      });
-                    }
-                  }}
-                  min={10}
-                  max={300}
-                  disabled={saving === 'advanced_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-              </div>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-border">
-              <div>
-                <label className="text-sm font-medium text-ink-900">Debug Mode</label>
-                <p className="text-xs text-ink-500 mt-0.5">Enable detailed diagnostic logging</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.advanced_config.enable_debug_mode}
-                  onChange={(e) => updateSetting('advanced_config', {
-                    ...settings.advanced_config,
-                    enable_debug_mode: e.target.checked
-                  })}
-                  disabled={saving === 'advanced_config'}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
-                  <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
-                </div>
-              </label>
-            </div>
+            )}
           </div>
         </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-ink-900 mb-2">Logging Level</label>
+            <select
+              value={settings.advanced_config.logging_level}
+              onChange={(e) => updateSetting('advanced_config', {
+                ...settings.advanced_config,
+                logging_level: e.target.value
+              })}
+              disabled={saving === 'advanced_config'}
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+            >
+              <option value="DEBUG">Debug</option>
+              <option value="INFO">Info</option>
+              <option value="WARNING">Warning</option>
+              <option value="ERROR">Error</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-ink-900 mb-2">DB Pool Size</label>
+              <input
+                type="number"
+                value={settings.advanced_config.database_pool_size}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (value >= 1 && value <= 20) {
+                    updateSetting('advanced_config', {
+                      ...settings.advanced_config,
+                      database_pool_size: value
+                    });
+                  }
+                }}
+                min={1}
+                max={20}
+                disabled={saving === 'advanced_config'}
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-ink-900 mb-2">API Timeout (s)</label>
+              <input
+                type="number"
+                value={settings.advanced_config.api_timeout_seconds}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (value >= 10 && value <= 300) {
+                    updateSetting('advanced_config', {
+                      ...settings.advanced_config,
+                      api_timeout_seconds: value
+                    });
+                  }
+                }}
+                min={10}
+                max={300}
+                disabled={saving === 'advanced_config'}
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <div>
+              <label className="text-sm font-medium text-ink-900">Debug Mode</label>
+              <p className="text-xs text-ink-500 mt-0.5">Enable detailed diagnostic logging</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.advanced_config.enable_debug_mode}
+                onChange={(e) => updateSetting('advanced_config', {
+                  ...settings.advanced_config,
+                  enable_debug_mode: e.target.checked
+                })}
+                disabled={saving === 'advanced_config'}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
+                <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
 
       {/* User Preferences */}
       <div className="bg-white border border-border rounded-lg">
@@ -981,7 +1176,7 @@ export function SettingsPage() {
                 'Are you absolutely sure?'
               );
               if (!confirmed) return;
-              
+
               try {
                 await apiDelete('/api/data/clear_all');
                 Object.keys(localStorage)
