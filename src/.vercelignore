@@ -1,0 +1,11 @@
+node_modules
+src-tauri
+dist
+.vite
+*.log
+.DS_Store
+target
+*.app
+*.dmg
+*.exe
+*.pkg

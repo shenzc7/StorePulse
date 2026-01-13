@@ -8,6 +8,7 @@
     "vite-dev": "vite",
     "tauri-dev": "tauri dev",
     "build": "tauri build",
+    "build:web": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest"
