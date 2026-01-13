@@ -55,6 +55,7 @@ if (typeof window !== 'undefined') {
     FALLBACK_BASE = PRIMARY_BASE;
   } else if (isProductionWeb && !ENV_BASE) {
     // Production web but no env var - use relative URLs (same origin)
+    // Don't fall back to localhost in production
     PRIMARY_BASE = '';
     FALLBACK_BASE = '';
   } else {
@@ -64,9 +65,21 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Ensure PRIMARY_BASE always has a valid default to prevent URL pattern errors
-if (!PRIMARY_BASE || PRIMARY_BASE.trim() === '') {
-  PRIMARY_BASE = LOCAL_PRIMARY;
+// Only set default to localhost if we're NOT in production web environment
+// This prevents production from trying to connect to localhost
+if ((!PRIMARY_BASE || PRIMARY_BASE.trim() === '') && typeof window !== 'undefined') {
+  const globalWindow = window as typeof window & {
+    __TAURI__?: unknown;
+  };
+  const isProductionWeb = 
+    !globalWindow.__TAURI__ && 
+    globalWindow.location?.protocol !== 'file:' &&
+    !globalWindow.location?.hostname?.includes('localhost') &&
+    !globalWindow.location?.hostname?.includes('127.0.0.1');
+  
+  if (!isProductionWeb) {
+    PRIMARY_BASE = LOCAL_PRIMARY;
+  }
 }
 
 function withBase(endpoint: string, base: string) {
@@ -141,9 +154,23 @@ async function requestWithFallback<T>({ endpoint, init }: FetchConfig): Promise<
       if (error instanceof Error) {
         const errorMsg = error.message?.toLowerCase() || '';
         if (errorMsg.includes('pattern') || errorMsg.includes('invalid url')) {
-          message = `Invalid API URL format. Tried: ${attemptedUrls.join(', ')}. Please ensure backend is running on port 9005.`;
+          const isProduction = typeof window !== 'undefined' && 
+            !window.location.hostname.includes('localhost') && 
+            !window.location.hostname.includes('127.0.0.1');
+          if (isProduction) {
+            message = `Backend API not configured. Please set VITE_API_BASE_URL environment variable.`;
+          } else {
+            message = `Invalid API URL format. Tried: ${attemptedUrls.join(', ')}. Please ensure backend is running on port 9005.`;
+          }
         } else if (errorMsg.includes('failed to fetch') || errorMsg.includes('networkerror')) {
-          message = `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9005.`;
+          const isProduction = typeof window !== 'undefined' && 
+            !window.location.hostname.includes('localhost') && 
+            !window.location.hostname.includes('127.0.0.1');
+          if (isProduction) {
+            message = `Cannot connect to backend API. Please ensure the backend is deployed and VITE_API_BASE_URL is configured.`;
+          } else {
+            message = `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9005.`;
+          }
         } else {
           message = error.message;
         }
@@ -157,8 +184,15 @@ async function requestWithFallback<T>({ endpoint, init }: FetchConfig): Promise<
     throw lastHttpError;
   }
 
-  const errorMessage = lastNetworkError?.message 
-    ?? `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9005.`;
+  const isProduction = typeof window !== 'undefined' && 
+    !window.location.hostname.includes('localhost') && 
+    !window.location.hostname.includes('127.0.0.1');
+  
+  const defaultMessage = isProduction
+    ? `Backend API is not available. Please deploy the backend and configure VITE_API_BASE_URL environment variable.`
+    : `Cannot connect to backend API. Tried: ${attemptedUrls.join(', ')}. Please ensure the backend is running on port 9005.`;
+  
+  const errorMessage = lastNetworkError?.message ?? defaultMessage;
   
   throw {
     message: errorMessage,
