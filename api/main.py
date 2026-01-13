@@ -55,16 +55,32 @@ app = FastAPI(
 # with the FastAPI backend. The frontend runs on:
 # - http://localhost:5173 during development (Vite dev server)
 # - tauri://localhost in production (Tauri packaged app)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+# - Vercel domains in production web deployment
+import os
+
+# Get allowed origins from environment or use defaults
+allowed_origins_env = os.getenv("CORS_ORIGINS", "")
+if allowed_origins_env:
+    # Parse comma-separated list from environment
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+else:
+    # Default origins for development
+    allowed_origins = [
         "http://localhost:5173",    # Vite development server port
         "http://127.0.0.1:5173",    # Vite dev server (IP address)
         "http://localhost:5174",    # Backup development port
         "http://127.0.0.1:5174",    # Backup dev port (IP address)
         "tauri://localhost",        # Tauri production environment
         "http://tauri.localhost",   # Alternative Tauri origin
-    ],
+    ]
+
+# Check if we should allow all origins (for production)
+allow_all_origins = os.getenv("CORS_ALLOW_ALL", "false").lower() == "true"
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"https://.*\.vercel\.app" if not allow_all_origins else None,
+    allow_origins=["*"] if allow_all_origins else allowed_origins,
     allow_credentials=True,       # Allow cookies and authentication headers
     allow_methods=["*"],         # Permit all HTTP methods (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],         # Allow all request headers
