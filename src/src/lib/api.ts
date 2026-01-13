@@ -35,15 +35,30 @@ if (typeof window !== 'undefined') {
     __TAURI__?: unknown;
   };
 
+  // Check if we're in a production web environment (not Tauri, not localhost)
+  const isProductionWeb = 
+    !globalWindow.__TAURI__ && 
+    globalWindow.location?.protocol !== 'file:' &&
+    !globalWindow.location?.hostname?.includes('localhost') &&
+    !globalWindow.location?.hostname?.includes('127.0.0.1');
+
   if (globalWindow.__STOREPULSE_API__) {
     PRIMARY_BASE = normalizeBase(globalWindow.__STOREPULSE_API__ as string);
     FALLBACK_BASE = PRIMARY_BASE || LOCAL_SECONDARY;
   } else if (globalWindow.__TAURI__ || globalWindow.location?.protocol === 'file:') {
+    // Tauri desktop app - use localhost
     PRIMARY_BASE = LOCAL_PRIMARY;
     FALLBACK_BASE = LOCAL_SECONDARY;
+  } else if (isProductionWeb && ENV_BASE) {
+    // Production web - use environment variable if set
+    PRIMARY_BASE = normalizeBase(ENV_BASE);
+    FALLBACK_BASE = PRIMARY_BASE;
+  } else if (isProductionWeb && !ENV_BASE) {
+    // Production web but no env var - use relative URLs (same origin)
+    PRIMARY_BASE = '';
+    FALLBACK_BASE = '';
   } else {
-    // In development mode, use Vite proxy or direct connection
-    // Always ensure PRIMARY_BASE has a valid default to avoid URL pattern errors
+    // Development mode - use localhost
     PRIMARY_BASE = LOCAL_PRIMARY;
     FALLBACK_BASE = LOCAL_SECONDARY;
   }
@@ -271,6 +286,13 @@ export function createEventSource(endpoint: string): EventSource {
   }
   
   return new EventSource(url);
+}
+
+/**
+ * Get the current API base URL
+ */
+export function getApiBaseUrl(): string {
+  return PRIMARY_BASE || FALLBACK_BASE || LOCAL_PRIMARY;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet, apiPost, type ApiError } from '../../src/lib/api';
+import { apiGet, apiPost, getApiBaseUrl, type ApiError } from '../../src/lib/api';
 
 interface Report {
   id: string;
@@ -67,7 +67,9 @@ export function ReportsPage() {
 
   const handleDownload = async (report: Report) => {
     // Direct download link
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:9005'}/api/reports/download/${report.category}/${report.filename}`;
+    const apiBase = getApiBaseUrl();
+    const endpoint = `/api/reports/download/${report.category}/${report.filename}`;
+    window.location.href = apiBase ? `${apiBase}${endpoint}` : endpoint;
   };
 
   const filteredReports = filter === 'all'
