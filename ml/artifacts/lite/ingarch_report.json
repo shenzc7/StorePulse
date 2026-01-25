@@ -1,5 +1,5 @@
 {
-  "dataset": "/var/folders/mr/k56xtgss4jb13qczsw_6mbbr0000gn/T/storepulse_train_2il9ej09/lite_sample.csv",
+  "dataset": "data/samples/lite_sample.csv",
   "rows": 335,
   "feature_cols": [
     "lag_1",
@@ -25,21 +25,21 @@
     "quarter"
   ],
   "model_spec": {
-    "p": 2,
+    "p": 1,
     "q": 1,
     "type": "INGARCH"
   },
   "training_metrics": {
-    "smape": 21.051300365346012,
-    "mase": 0.026606662899121895,
-    "rmse": 34.14841962076047,
-    "ma7_smape": 20.840760244695034,
-    "naive_smape": 19.367432274506175
+    "smape": 11.984046642615368,
+    "mase": 0.03025106137269876,
+    "rmse": 19.0129595477699,
+    "ma7_smape": 11.646946308385782,
+    "naive_smape": 12.61199056500002
   },
   "quality_gate": {
     "applies": true,
     "threshold_pct": 0.0,
-    "lift_pct": -1.0102324395990852,
+    "lift_pct": -2.8943237592404287,
     "passed": true
   },
   "backtest": {
