@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StorePulse: System Evaluation & Limits</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'neutral',
+            fontFamily: 'Inter'
+        });
+    </script>
+    <style>
+        /* Import Fonts: Inter (Headings), Merriweather (Body), JetBrains Mono (Code) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --primary: #0f172a;
+            /* Deep Slate */
+            --accent: #0f172a;
+            /* Official Black/Slate for professional look */
+            --text: #334155;
+            /* Slate 700 */
+            --bg: #f1f5f9;
+            /* Light Gray Background for Screen */
+            --paper: #ffffff;
+            /* White Paper */
+            --code-bg: #f8fafc;
+            --border: #e2e8f0;
+            --note-bg: #f0f9ff;
+            --note-border: #0ea5e9;
+            --warn-bg: #fffbeb;
+            --warn-border: #f59e0b;
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+        }
+
+        body {
+            font-family: 'Merriweather', serif;
+            /* Classic Book Feel */
+            font-size: 11pt;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+            margin: 0;
+            padding: 2rem 0;
+            text-align: justify;
+            /* Justified text for book look */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* A4 Sheet Style (Google Docs style) */
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 2rem auto;
+            /* Gap between sheets */
+            background: var(--paper);
+            padding: 20mm 25mm;
+            /* Inner margins */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            /* Prevent overflow */
+        }
+
+        /* A4 Page Setup for Print */
+        @page {
+            size: A4;
+            margin: 25mm 20mm;
+
+            /* Generous margins */
+            @top-center {
+                content: "StorePulse Technical Evaluation";
+                font-family: 'Inter', sans-serif;
+                font-size: 9pt;
+                color: #94a3b8;
+            }
+
+            @bottom-center {
+                content: counter(page);
+                font-family: 'Inter', sans-serif;
+                font-size: 10pt;
+                font-weight: bold;
+            }
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Inter', sans-serif;
+            /* Modern Headings */
+            color: var(--primary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 28pt;
+            font-weight: 800;
+            letter-spacing: -1px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 20pt;
+            font-weight: 700;
+            margin-top: 3rem;
+            border-left: 4px solid var(--primary);
+            padding-left: 15px;
+        }
+
+        h3 {
+            font-size: 16pt;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        p {
+            margin-bottom: 1.2rem;
+        }
+
+        /* Chapter Title Page Style */
+        .chapter-title {
+            text-align: right;
+            font-size: 12pt;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #64748b;
+            margin-bottom: 5px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Cover Page - Professional Evaluation Theme */
+        .cover-page {
+            height: 100%;
+            /* Fill the sheet */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            /* Left align for modern look */
+            text-align: left;
+            padding: 3rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            position: relative;
+            overflow: hidden;
+            color: var(--primary);
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+        }
+
+        .cover-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        .cover-title {
+            font-size: 42pt;
+            color: var(--primary);
+            margin-bottom: 0;
+            border: none;
+            letter-spacing: -2px;
+            line-height: 1.1;
+        }
+
+        .cover-subtitle {
+            font-family: 'Merriweather', serif;
+            font-style: italic;
+            font-size: 16pt;
+            color: #64748b;
+            font-weight: 300;
+            margin-top: 1rem;
+            margin-bottom: 4rem;
+            max-width: 80%;
+            border-left: 1px solid #94a3b8;
+            padding-left: 20px;
+        }
+
+        .cover-meta {
+            margin-top: auto;
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+            color: #64748b;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .cover-meta strong {
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        /* TOC */
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dotted #cbd5e1;
+            padding: 0.8rem 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .toc-item a {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .toc-item span {
+            color: #64748b;
+        }
+
+        /* Callout Boxes */
+        .box {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .note,
+        .tip,
+        .warn,
+        .danger {
+            padding: 1.2rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+        }
+
+        .note {
+            background: var(--note-bg);
+            border-left: 4px solid var(--note-border);
+        }
+
+        .note strong {
+            color: var(--note-border);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .tip {
+            background: #f0fdf4;
+            border-left: 4px solid #16a34a;
+        }
+
+        .tip strong {
+            color: #16a34a;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .warn {
+            background: var(--warn-bg);
+            border-left: 4px solid var(--warn-border);
+        }
+
+        .warn strong {
+            color: var(--warn-border);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .danger {
+            background: var(--danger-bg);
+            border-left: 4px solid var(--danger-border);
+        }
+
+        .danger strong {
+            color: var(--danger-border);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code & Tables */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border);
+            padding: 0.8rem;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        /* Diagrams */
+        .mermaid {
+            text-align: center;
+            margin: 3rem 0;
+        }
+
+        /* Print Overrides */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .sheet {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                min-height: auto;
+                page-break-after: always;
+            }
+
+            .cover-page {
+                height: 100vh;
+                margin: 0;
+                width: 100%;
+            }
+
+            a {
+                text-decoration: none;
+                color: inherit;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SHEET 1: COVER PAGE -->
+    <div class="sheet" style="padding: 0; overflow: hidden;">
+        <div class="cover-page">
+            <div class="cover-badge">Confidential • Engineering</div>
+
+            <h1 class="cover-title">SYSTEM<br>EVALUATION</h1>
+            <div class="cover-subtitle">Technical Capacity, Load Limits, and Data Validity Specifications.</div>
+
+            <div class="cover-meta">
+                <p><strong>STOREPULSE CORE v1.0.1</strong></p>
+                <p>Engineering Report</p>
+                <p>Status: FINAL</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHEET 2: TABLE OF CONTENTS -->
+    <div class="sheet">
+        <div class="chapter-title">Reference</div>
+        <h1>Table of Contents</h1>
+        <p>This document provides a technical evaluation of the StorePulse system, defining hard limits for operational
+            stability and data integrity.</p>
+
+        <div class="box" style="border: none; box-shadow: none;">
+            <div class="toc-item"><a href="#intro">1. Executive Summary</a> <span>Pg 3</span></div>
+            <div class="toc-item"><a href="#capacity">2. System Capacity & Load Limits</a> <span>Pg 4</span></div>
+            <div class="toc-item"><a href="#lifecycle">3. Data Lifecycle & Model Drift</a> <span>Pg 7</span></div>
+            <div class="toc-item"><a href="#constraints">4. Operational Constraints</a> <span>Pg 10</span></div>
+            <div class="toc-item"><a href="#risk">5. Risk Analysis & Recovery</a> <span>Pg 12</span></div>
+        </div>
+    </div>
+
+    <!-- SHEET 3: INTRODUCTION -->
+    <div class="sheet">
+        <div id="intro"></div>
+        <div class="chapter-title">Chapter 1</div>
+        <h1>Executive Summary</h1>
+
+        <p>StorePulse is architected as a lightweight, single-tenant desktop solution. This design decision inherently
+            imposes specific operational boundaries compared to cloud-native, distributed systems.</p>
+
+        <p>To operate this system reliably, stakeholders must understand two critical dimensions:</p>
+
+        <ol>
+            <li><strong>Capacity Limits ("The Break Point"):</strong> The maximum load (data size, concurrency) the
+                system can sustain before performance degradation or failure.</li>
+            <li><strong>Validity Limits ("The Expiry"):</strong> The temporal boundaries within which data and models
+                remain statistically valid before requiring refreshment.</li>
+        </ol>
+
+        <div class="box">
+            <h3>Architectural Scope</h3>
+            <p><strong>Target Environment:</strong> Local Machine (MacOS/Windows)</p>
+            <p><strong>Database:</strong> SQLite (Embedded, Single-writer)</p>
+            <p><strong>Compute:</strong> Local CPU (NB-INGARCH Optimization Loop)</p>
+        </div>
+
+        <p>This document details the specific metrics for these boundaries to prevent misuse (e.g., attempting to load
+            enterprise-scale datasets into a local instance).</p>
+    </div>
+
+    <!-- SHEET 4: CAPACITY -->
+    <div class="sheet">
+        <div id="capacity"></div>
+        <div class="chapter-title">Chapter 2</div>
+        <h1>System Capacity & Load Limits</h1>
+
+        <p>StorePulse utilizes an in-memory data pipeline (Pandas) coupled with a synchronous optimization engine. This
+            architecture prioritizes simplicity and privacy but is constrained by local hardware resources.</p>
+
+        <h3>1. Data Ingestion Throughput</h3>
+        <p>The system ingests CSV data directly into volatile memory for validation before persistence.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Optimal Range</th>
+                    <th>Hard Limit (Failure Point)</th>
+                    <th>Failure Mechanism</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>File Size</strong></td>
+                    <td>
+                        < 10 MB</td>
+                    <td>~50 MB</td>
+                    <td>Browser/Backend Timeout</td>
+                </tr>
+                <tr>
+                    <td><strong>Row Count</strong></td>
+                    <td>
+                        < 50,000 Rows</td>
+                    <td>~500,000 Rows</td>
+                    <td><code>MemoryError</code> (OOM crash)</td>
+                </tr>
+                <tr>
+                    <td><strong>Column Width</strong></td>
+                    <td>2-10 Columns</td>
+                    <td>N/A</td>
+                    <td>Parser Performance Degradation</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warn">
+            <strong>Single Store Limitation</strong>
+            The system schema is designed for <strong>Single Store</strong> daily granularity. It does not support
+            multi-tenant or multi-store aggregation in a single table. Attempting to load multi-store data will result
+            in statistical noise and model failure.
+        </div>
+
+        <h3>2. Computational Complexity</h3>
+        <p>The NB-INGARCH model relies on Maximum Likelihood Estimation (MLE), an iterative optimization process. The
+            time complexity is approximately $O(N \times I)$, where $N$ is the history length and $I$ is the number of
+            iterations.</p>
+
+        <div class="mermaid">
+            graph LR
+            A["Short History<br>(1 Year / 365 pts)"] -->|Time: ~20s| B(Optimal)
+            C["Medium History<br>(3 Years / 1k pts)"] -->|Time: ~60s| D(Tolerable)
+            E["Long History<br>(10 Years / 3.6k pts)"] -->|Time: >5 min| F(Timeout/Unresponsive)
+        </div>
+
+        <ul>
+            <li><strong>Recommendation:</strong> Truncate training data to the most recent 3-5 years to maintain
+                interactive performance.</li>
+            <li><strong>Impact:</strong> Exceeding this limit causes the UI to blocking state ("spinning wheel") during
+                the training phase.</li>
+        </ul>
+    </div>
+
+    <!-- SHEET 5: LIFECYCLE -->
+    <div class="sheet">
+        <div id="lifecycle"></div>
+        <div class="chapter-title">Chapter 3</div>
+        <h1>Data Validity & Model Lifecycle</h1>
+
+        <p>Statistical models are temporal snapshots of consumer behavior. As time passes from the moment of training,
+            the model's predictive power decays ("Drift").</p>
+
+        <h3>1. Model Staleness Guidelines</h3>
+        <p>To maintain forecast accuracy within the target SMAPE thresholds, models must be retrained regularly.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Age</th>
+                    <th>Status</th>
+                    <th>Action Required</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>0 - 7 Days</strong></td>
+                    <td><strong>Valid</strong> (Green)</td>
+                    <td>No action. Predictions are statistically robust.</td>
+                </tr>
+                <tr>
+                    <td><strong>8 - 30 Days</strong></td>
+                    <td><strong>Drifting</strong> (Amber)</td>
+                    <td>Monitoring recommended. Retrain if recent trends shift.</td>
+                </tr>
+                <tr>
+                    <td><strong>> 30 Days</strong></td>
+                    <td><strong>Invalid</strong> (Red)</td>
+                    <td><strong>Retrain Immediately.</strong> Seasonality patterns are likely outdated.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2. Forecast Horizon Reliability</h3>
+        <p>Predictive variance increases non-linearly with time.</p>
+
+        <ul>
+            <li><strong>Short Term (1-3 Days):</strong> High confidence (90-95%). Suitable for precise staffing
+                allocations.</li>
+            <li><strong>Medium Term (4-7 Days):</strong> Moderate confidence (80-85%). Suitable for inventory
+                procurement.</li>
+            <li><strong>Long Term (8-14 Days):</strong> Low confidence (< 70%). Directional planning only; do not commit
+                    financial resources based solely on these figures.</li>
+        </ul>
+
+        <div class="note">
+            <strong>Concept: "Data Freshness"</strong>
+            Similar to perishable goods, data has an expiry. A forecast generated today using data from last month is
+            inherently flawed because it lacks recent context (e.g., a sudden competitor opening or local event).
+        </div>
+
+        <h3>3. Data Continuity Requirements</h3>
+        <p>NB-INGARCH is an autoregressive process, meaning $Y_t$ depends heavily on $Y_{t-1}, Y_{t-7}$.</p>
+
+        <div class="danger">
+            <strong>Gap Tolerance</strong>
+            Missing data points break the autoregressive chain.
+            <br><br>
+            <ul>
+                <li><strong>
+                        < 2 Days Missing:</strong> System can interpolate (Linear fill).</li>
+                <li><strong>> 5 Days Missing:</strong> Autoregressive features become invalid. The model reverts to a
+                    simple mean, significantly reducing accuracy.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SHEET 6: CONSTRAINTS -->
+    <div class="sheet">
+        <div id="constraints"></div>
+        <div class="chapter-title">Chapter 4</div>
+        <h1>Operational Constraints</h1>
+
+        <p>The business logic layer ("The Brain") enforces specific constraints to reflect the operational reality of
+            small-to-medium retail outlets.</p>
+
+        <h3>1. Staffing Recommendation Bounds</h3>
+        <p>The <code>forecast_service.py</code> module implements clamping logic to prevent clear statistical outliers
+            from generating impossible operational commands.</p>
+
+        <div class="box">
+            <h4>Hard Limits</h4>
+            <ul>
+                <li><strong>Minimum Staffing:</strong> 1 (Safety Constraint). The system will never recommend 0 staff,
+                    even if predicted visits are 0.</li>
+                <li><strong>Maximum Implicit Staffing:</strong> ~50. derived from <code>customers_per_staff</code>
+                    settings (45). The system is not calibrated for operations requiring hundreds of staff (e.g.,
+                    stadium events).</li>
+            </ul>
+        </div>
+
+        <h3>2. Inventory Logic Assumptions</h3>
+        <p>Inventory risk alerts are derived from a fixed conversion model defined in <code>INVENTORY_CONFIG</code>.</p>
+
+        <ul>
+            <li><strong>Assumption:</strong> 18% Conversion Rate (average for retail clothing/goods).</li>
+            <li><strong>Constraint:</strong> This is a global constant in the codebase. It does not dynamically adjust
+                to different store types (e.g., High Volume Grocery vs. Low Volume Luxury).</li>
+            <li><strong>Mitigation:</strong> Users must request configuration changes if their business model deviates
+                significantly from this baseline.</li>
+        </ul>
+    </div>
+
+    <!-- SHEET 7: RISK -->
+    <div class="sheet">
+        <div id="risk"></div>
+        <div class="chapter-title">Chapter 5</div>
+        <h1>Risk Analysis & Recovery</h1>
+
+        <h3>1. Failure Modes</h3>
+        <p>When system limits are exceeded, StorePulse exhibits specific failure behaviors:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Trigger</th>
+                    <th>Symptom</th>
+                    <th>Recovery</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Oversized CSV</strong></td>
+                    <td>Frontend Freeze / 504 Gateway Timeout</td>
+                    <td>Refresh page; Split CSV into yearly chunks.</td>
+                </tr>
+                <tr>
+                    <td><strong>Corrupt Database</strong></td>
+                    <td>Application crashes on launch</td>
+                    <td>Delete <code>store.db</code> (Data loss warning).</td>
+                </tr>
+                <tr>
+                    <td><strong>Model Divergence</strong></td>
+                    <td>Predictions show flat lines or NaNs</td>
+                    <td>Clear Training Cache; Retrain model with different parameters.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2. Concurrency Risks</h3>
+        <p>SQLite allows only one writer at a time.</p>
+        <div class="warn">
+            <strong>Single User Only</strong>
+            Attempting to access the application from multiple tabs or instances simultaneously may result in
+            <code>Database Locked</code> errors. This is a design constraint, not a bug.
+        </div>
+    </div>
+
+</body>
+
+</html>
