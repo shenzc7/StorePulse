@@ -1,5 +1,5 @@
 """Forecast retrieval endpoints."""
-from datetime import date, datetime, timedelta
+from datetime import datetime
 
 from typing import Any, Dict
 

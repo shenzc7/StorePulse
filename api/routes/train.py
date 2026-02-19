@@ -438,6 +438,8 @@ async def _prepare_dataset(request: Request) -> PreparedDataset:
                     status_code=400,
                     detail=f"Not enough data for training. Your file has {len(df)} rows, but we need at least 30 days of data. Please download a sample file or add more historical data."
                 )
+            if len(df) > MAX_TRAINING_ROWS:
+                tempdir.cleanup()
                 raise HTTPException(
                     status_code=400,
                     detail=f"Training file has {len(df):,} rows which exceeds the {MAX_TRAINING_ROWS:,} row limit."

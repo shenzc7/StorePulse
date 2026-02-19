@@ -48,7 +48,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -614,7 +614,7 @@ class ForecastCache:
                       mode: str, forecast_data: Dict[str, Any],
                       ttl_seconds: int) -> bool:
         """Cache forecast results for performance."""
-        expires_at = datetime.utcnow() + timedelta(seconds=ttl_seconds)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
         for attempt in range(2):
             with db_manager.get_connection() as conn:
                 try:
@@ -665,9 +665,12 @@ class ForecastCache:
                 if expires_at_raw:
                     try:
                         expires_at = datetime.fromisoformat(expires_at_raw)
+                        # If the stored ISO string doesn't have offset, assume UTC for check
+                        if expires_at.tzinfo is None:
+                            expires_at = expires_at.replace(tzinfo=timezone.utc)
                     except ValueError:
-                        expires_at = datetime.utcnow() - timedelta(seconds=1)
-                    if expires_at < datetime.utcnow():
+                        expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+                    if expires_at < datetime.now(timezone.utc):
                         return None
 
                 payload = json.loads(row['forecast_json'])

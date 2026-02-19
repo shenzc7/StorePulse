@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from '@tanstack/react-router';
 import { apiGet, type ApiError } from '../../src/lib/api';
 import { ForecastHeader } from './components/ForecastHeader';
 import { MetricCards } from './components/MetricCards';
@@ -168,12 +169,12 @@ export function ForecastPage() {
           <p className="text-blue-700 max-w-md mx-auto mb-6">
             {forecastData.message || 'Train the NB-INGARCH model to start generating intelligent demand forecasts for your store.'}
           </p>
-          <a href="/train" className="btn-primary inline-flex items-center gap-2 shadow-sm">
+          <Link to="/train" className="btn-primary inline-flex items-center gap-2 shadow-sm">
             Setup Forecasting Engine
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     );

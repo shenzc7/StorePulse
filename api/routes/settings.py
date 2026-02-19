@@ -1,7 +1,7 @@
 """Application settings management endpoints."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
@@ -91,13 +91,15 @@ class ApplicationSettings(BaseModel):
     # User preferences (from localStorage, but stored server-side)
     auto_run: bool = Field(True, description="Auto-run forecasts on page load")
 
-    @validator('automation')
+    @field_validator('automation')
+    @classmethod
     def validate_automation_settings(cls, v: AutomationSettings) -> AutomationSettings:
         """Validate automation settings consistency."""
         if v.auto_forecast_enabled and not v.auto_forecast_time:
             raise ValueError("auto_forecast_time is required when auto_forecast_enabled is True")
         if v.auto_training_enabled and v.auto_training_interval_days < 7:
             raise ValueError("auto_training_interval_days must be at least 7 days")
+        return v
         return v
 
 
@@ -208,9 +210,14 @@ async def update_settings(request: UpdateSettingsRequest) -> Dict[str, str]:
 
         payload = request.settings
         if request.section in BOOLEAN_SECTIONS:
-            if not isinstance(payload, bool):
-                raise HTTPException(status_code=400, detail="Expected a boolean value.")
-            SettingsRepository.set_setting(request.section, payload)
+            # payload is always a Dict — extract the boolean value from it
+            value = payload.get("value") if isinstance(payload, dict) else payload
+            if not isinstance(value, bool):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Expected a boolean value. Send {\"value\": true/false}."
+                )
+            SettingsRepository.set_setting(request.section, value)
         else:
             model_cls = SECTION_MODEL_MAP.get(request.section)
             if not model_cls:

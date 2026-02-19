@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from '@tanstack/react-router';
 import { apiGet, type ApiError } from '../../src/lib/api';
 interface ModelMetrics {
   lite_lift: number;
@@ -145,7 +146,7 @@ export function HomePage() {
         <h2 className="text-xs font-medium text-ink-faint uppercase tracking-wider mb-4">Actions</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Setup Forecasting Action */}
-          <a href="/train" className="card p-5 group block hover:bg-surface-hover transition-all">
+          <Link to="/train" className="card p-5 group block hover:bg-surface-hover transition-all">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-lg bg-surface-active flex items-center justify-center group-hover:bg-surface-active/80 transition-colors border border-border">
                 <svg className="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,10 +165,10 @@ export function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-          </a>
+          </Link>
 
           {/* View Predictions Action */}
-          <a href="/forecast" className="card p-5 group block hover:bg-surface-hover transition-all">
+          <Link to="/forecast" className="card p-5 group block hover:bg-surface-hover transition-all">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-lg bg-surface-active flex items-center justify-center group-hover:bg-surface-active/80 transition-colors border border-border">
                 <svg className="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,10 +187,10 @@ export function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-          </a>
+          </Link>
 
           {/* Store Data Action */}
-          <a href="/data" className="card p-5 group block hover:bg-surface-hover transition-all">
+          <Link to="/data" className="card p-5 group block hover:bg-surface-hover transition-all">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-lg bg-surface-active flex items-center justify-center group-hover:bg-surface-active/80 transition-colors border border-border">
                 <svg className="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +209,7 @@ export function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-          </a>
+          </Link>
         </div>
       </section>
     </div>

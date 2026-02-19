@@ -97,7 +97,8 @@ def calculate_model_metrics() -> dict:
 
             # Calculate real baseline accuracy
             baseline_errors = np.abs(actual_visits - baseline_preds)
-            baseline_mape = np.mean(baseline_errors / actual_visits) * 100
+            safe_actual = np.where(actual_visits > 0, actual_visits, 1)
+            baseline_mape = np.mean(baseline_errors / safe_actual) * 100
 
             # Estimate model lift based on INGARCH characteristics
             # INGARCH typically performs 15-35% better than MA7
@@ -112,7 +113,8 @@ def calculate_model_metrics() -> dict:
 
         if len(weekend_data) > 5:
             weekend_baseline_errors = np.abs(weekend_data['visits'] - weekend_data['ma7_baseline'])
-            weekend_baseline_mape = np.mean(weekend_baseline_errors / weekend_data['visits']) * 100
+            safe_weekend = np.where(weekend_data['visits'] > 0, weekend_data['visits'], 1)
+            weekend_baseline_mape = np.mean(weekend_baseline_errors / safe_weekend) * 100
 
             # INGARCH typically performs better on weekends due to volatility clustering
             weekend_model_mape = max(weekend_baseline_mape * 0.6, weekend_baseline_mape - 12.0)

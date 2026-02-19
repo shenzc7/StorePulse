@@ -4,26 +4,21 @@
 
 ## 🚀 Quick Start - Get Running in 5 Minutes
 
-### 🍎 macOS - One Command Setup (Easiest!) ⚡
+### 🍎 macOS - The Perfect One-Liner ⚡
 
-**Copy and paste this single command into your terminal:**
+**Get StorePulse up and running in a single step. Copy and paste this into your terminal:**
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/shenzc7/StorePulse/main/SETUP_MACOS.sh)"
 ```
 
-**This single command will:**
-- ✅ Install Homebrew (if needed)
-- ✅ Install Python 3.13, Node.js 20, Git, and Rust
-- ✅ Clone the StorePulse repository
-- ✅ Install all Python and Node.js dependencies (with proper version locking)
-- ✅ Configure Python paths automatically
-- ✅ Verify your setup
-- ✅ Start the application automatically
+**What this does:**
+- ✅ Checks/Installs **Homebrew**, **Python**, **Node.js**, and **Rust**
+- ✅ Clones the repository and installs all dependencies
+- ✅ Configures your environment and launches the app automatically
 
-**Time:** 10-15 minutes (depending on internet speed)
+**Time:** ~5-10 minutes. Zero configuration required.
 
-> **🎉 NEW**: The macOS installer has been completely fixed! It now resolves Python import errors, Tauri version mismatches, and Node.js PATH issues automatically. See [QUICK_INSTALL_MACOS.md](QUICK_INSTALL_MACOS.md) for details.
 
 ### 🪟 Windows 10/11 - One Command Setup (Admin PowerShell)
 
