@@ -68,12 +68,24 @@ import joblib
 import numpy as np
 import pandas as pd
 
+import sys
 from .db import ForecastCache, ModelRepository, SettingsRepository, VisitRepository
+
+logger = logging.getLogger(__name__)
+
+# Ensure ml module is discoverable for joblib deserialization
+project_root = str(Path(__file__).resolve().parents[2])
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+# Import model classes so they are in the namespace for joblib
+try:
+    from ml.models import NBINGARCHModel, BaselineARModel
+except ImportError:
+    logger.warning("ML models not found in path, joblib may fail to load artifacts")
 
 # Artifact paths
 HOLIDAY_CSV = Path(__file__).resolve().parents[2] / "data" / "holidays" / "regional_holidays.csv"
-
-logger = logging.getLogger(__name__)
 
 # Configuration constants extracted from scattered "magic numbers"
 FORECAST_HISTORY_WINDOW_DAYS = 365
@@ -344,12 +356,39 @@ class ForecastService:
             "data_freshness": data_freshness,
         }
 
+    def _to_interval_forecast(self, predictions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Backwards-compatible interval payload (p10/p50/p90) from prediction rows."""
+        forecast_rows: List[Dict[str, Any]] = []
+        for pred in predictions:
+            forecast_rows.append({
+                "date": pred["date"],
+                "p10": float(pred["lower_bound"]),
+                "p50": float(pred["predicted_visits"]),
+                "p90": float(pred["upper_bound"]),
+            })
+        return forecast_rows
+
+    def _normalize_response_shape(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize response payload so legacy cached rows remain API-compatible."""
+        if not isinstance(payload, dict):
+            return payload
+
+        predictions = payload.get("predictions")
+        has_predictions = isinstance(predictions, list) and len(predictions) > 0
+        if "forecast" not in payload and has_predictions:
+            payload["forecast"] = self._to_interval_forecast(predictions)
+        elif "forecast" not in payload:
+            payload["forecast"] = []
+        return payload
+
     def forecast(self, horizon_days: int = 7, mode: str = "lite") -> Dict[str, Any]:
         """Generate forecasts for the requested mode with RECURSIVE updates for lag features."""
         try:
             normalized_mode = self._normalize_mode(mode)
         except ValueError as exc:
-            return {"status": "error", "message": str(exc), "generated_at": datetime.now().isoformat()}
+            return self._normalize_response_shape(
+                {"status": "error", "message": str(exc), "generated_at": datetime.now().isoformat()}
+            )
 
         cache_cfg = self._get_cache_settings()
         today = date.today()
@@ -357,19 +396,19 @@ class ForecastService:
             cached = ForecastCache.get_cached_forecast(today, horizon_days, normalized_mode)
             if cached:
                 cached["cache_hit"] = True
-                return cached
+                return self._normalize_response_shape(cached)
 
         bundle = self._load_model_bundle(normalized_mode)
         if not bundle:
-            return self._no_model_response(normalized_mode)
+            return self._normalize_response_shape(self._no_model_response(normalized_mode))
 
         historical_data = VisitRepository.get_visit_history(FORECAST_HISTORY_WINDOW_DAYS)
         if not historical_data or len(historical_data) < MIN_HISTORY_ROWS:
-            return {
+            return self._normalize_response_shape({
                 "status": "insufficient_data",
                 "message": f"Historical data required: {len(historical_data) if historical_data else 0}/{MIN_HISTORY_ROWS} records found.",
                 "generated_at": datetime.now().isoformat(),
-            }
+            })
 
         hist_df = pd.DataFrame(historical_data)
         hist_df["event_date"] = pd.to_datetime(hist_df["event_date"])
@@ -415,23 +454,25 @@ class ForecastService:
             X = pd.DataFrame([features])[bundle["feature_cols"]]
             try:
                 model = bundle["model"]
-                if hasattr(model, 'predict') and hasattr(model, 'coef_'):
+                if hasattr(model, "predict") and hasattr(model, "coef_"):
                     pred_val = float(model.predict(X)[0])
-                elif hasattr(model, 'predict'):
-                    pred_row = X.values if not hasattr(X, 'to_numpy') else X.to_numpy() # Handle older sklearn
+                elif hasattr(model, "predict"):
+                    pred_row = X.values if not hasattr(X, "to_numpy") else X.to_numpy()
                     pred_val = float(model.predict(exog=pred_row)[0])
                 else:
                     pred_val = dow_avg
-            except:
+                    feature_warnings.append(
+                        "Model object missing predict(); fallback to historical weekday average used."
+                    )
+            except Exception as exc:
+                logger.warning("Model prediction failed for %s: %s", target_date, exc)
                 pred_val = dow_avg
+                feature_warnings.append(
+                    f"Fallback used for {target_date}: model prediction error."
+                )
 
-            # Apply multipliers + variance
-            mode_key = "pro" if "pro" in bundle["model_type"].lower() else "lite"
-            multiplier = WEEKDAY_MULTIPLIERS.get(mode_key, {}).get(dow, 1.0)
-            
-            # Business Logic: Inject small variation for "realistic" planning feel
-            noise = 1.0 + (np.random.random() * 0.08 - 0.04) # ±4% variance
-            pred_val = max(pred_val * multiplier * noise, MIN_PREDICTED_VISITS)
+            # Keep values physically valid for count forecasts.
+            pred_val = max(pred_val, MIN_PREDICTED_VISITS)
             
             # Confidence bounds
             std = features.get("rolling_std_7", pred_val * 0.15)
@@ -466,6 +507,7 @@ class ForecastService:
             "model_version": metadata["model_version"],
             "forecast_horizon_days": horizon_days,
             "predictions": all_predictions,
+            "forecast": self._to_interval_forecast(all_predictions),
             "staffing_recommendations": self._calculate_staffing_needs(all_predictions),
             "inventory_alerts": self._calculate_inventory_alerts(all_predictions),
             "generated_at": datetime.now().isoformat(),
@@ -476,7 +518,7 @@ class ForecastService:
         if cache_cfg["enabled"]:
             ForecastCache.cache_forecast(today, horizon_days, normalized_mode, response, cache_cfg["ttl"])
 
-        return response
+        return self._normalize_response_shape(response)
 
     def generate_forecast(self, start_date: date, horizon_days: int = 7, mode: str = "lite") -> Dict[str, Any]:
         """Generate baseline forecast for What-If analysis."""
@@ -531,6 +573,7 @@ class ForecastService:
 
         return {
             "predictions": forecast_data,
+            "forecast": self._to_interval_forecast(forecast_data),
             "model_type": f"{bundle['model_type']} ({normalized_mode} mode)",
             "status": "success",
             "warnings": feature_warnings,

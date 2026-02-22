@@ -11,6 +11,8 @@ MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024  # 50MB
 MAX_ROWS = 10_000
 ALLOWED_EXTENSIONS = {".csv", ".json", ".xlsx", ".xls"}
 
+from ..core.db import VisitRepository
+
 router = APIRouter(prefix="/files", tags=["files"])
 
 
@@ -68,10 +70,26 @@ async def upload_file(payload: UploadFile = File(...)) -> dict[str, str]:
             saved_name = f"{Path(original_name).stem}.csv"
             target_path = DATA_ROOT / saved_name
             df.to_csv(target_path, index=False)
+        elif suffix == ".json":
+            df = pd.read_json(BytesIO(content))
+            target_path.write_bytes(content)
         else:
+            df = pd.read_csv(BytesIO(content))
             target_path.write_bytes(content)
 
-        return {"filename": saved_name, "path": str(target_path)}
+        # Automatically import into database
+        # Detect mode based on columns: if it has pro columns, use pro mode
+        pro_columns = {"sales", "conversion", "promo_type", "weather", "paydays"}
+        mode = "pro" if any(col in df.columns for col in pro_columns) else "lite"
+        
+        import_result = VisitRepository.import_dataframe(df, mode=mode)
+
+        return {
+            "filename": saved_name, 
+            "path": str(target_path),
+            "import_status": import_result.get("status"),
+            "imported_count": import_result.get("imported_count", 0)
+        }
     except HTTPException:
         raise
     except Exception as exc:

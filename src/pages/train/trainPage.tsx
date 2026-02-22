@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { getApiBaseUrl } from '../../src/lib/api';
 type TrainingStatus = 'idle' | 'running' | 'completed' | 'error';
 type TrainingMilestone = 'features' | 'ingarch' | 'done';
 interface TrainingMetrics {
@@ -27,14 +28,11 @@ export function TrainPage() {
   const [progressLog, setProgressLog] = useState<string[]>([]);
   const [streamWarning, setStreamWarning] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Handle navigation attempts during training
-  const handleNavigationAttempt = useCallback(() => {
-    if (trainingStatus === 'running') {
-      setShowNavigationWarning(true);
-      return false; // Prevent navigation
-    }
-    return true; // Allow navigation
-  }, [trainingStatus]);
+  const apiBase = getApiBaseUrl().replace(/\/+$/, '');
+  const toApiUrl = useCallback(
+    (endpoint: string) => `${apiBase}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`,
+    [apiBase]
+  );
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -70,7 +68,7 @@ export function TrainPage() {
       formData.append('mode', datasetMode);
       formData.append('dataset_mode', datasetMode);
       formData.append('training_mode', trainingQuality);
-      const response = await fetch('/api/train/', {
+      const response = await fetch(toApiUrl('/api/train/'), {
         method: 'POST',
         body: formData,
       });
@@ -95,45 +93,7 @@ export function TrainPage() {
       let currentEvent = '';
       let currentData = '';
       let trainingFinished = false;
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            // Process any remaining data in buffer
-            if (buffer.trim()) {
-              const lines = buffer.split('\n');
-              for (const line of lines) {
-                if (line.trim()) {
-                  processSSELine(line.trim());
-                }
-              }
-            }
-            break;
-          }
-          buffer += decoder.decode(value, { stream: true });
-          // Process complete lines
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line in buffer
-          for (const line of lines) {
-            if (line.trim()) {
-              processSSELine(line.trim());
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error reading SSE stream:', error);
-        setStreamWarning('Connection to the training stream was interrupted. You can retry the training run.');
-        setTrainingStatus('error');
-        setErrorMessage('Failed to read training progress. Please check your connection.');
-        globalTrainingInProgress = false;
-      }
-      if (!trainingFinished && globalTrainingInProgress) {
-        setStreamWarning('Training stream disconnected before completion. You can restart the run to continue.');
-        setTrainingStatus('error');
-        globalTrainingInProgress = false;
-      }
-
-      function processSSELine(line: string) {
+      const processSSELine = (line: string) => {
         if (line.startsWith('event:')) {
           currentEvent = line.slice(6).trim();
         } else if (line.startsWith('data:')) {
@@ -159,55 +119,94 @@ export function TrainPage() {
             if (typeof parsed.progress === 'number') {
               setProgressPercent(parsed.progress);
             }
-              if (parsed.quality_metrics) {
-                const metrics = parsed.quality_metrics;
-                // Calculate REAL accuracy from SMAPE (lower SMAPE = better)
-                // SMAPE of 0% means 100% accuracy, SMAPE of 100% means 0% accuracy
-                // Handle edge cases: if smape is null/undefined/NaN, default to 85% accuracy
-                const smape = metrics.smape;
-                let accuracy = 85; // Default
-                if (smape !== null && smape !== undefined && !isNaN(smape)) {
-                  // Calculate accuracy as inverse of SMAPE (clamped to 0-100%)
-                  // SMAPE 0% = 100% accuracy, SMAPE 100% = 0% accuracy
-                  accuracy = Math.max(0, Math.min(100, 100 - smape));
-                  // If SMAPE is very high (>80%), suggest retraining
-                  if (smape > 80) {
-                    console.warn('⚠️ High SMAPE detected, model may need retraining');
-                  }
+            if (parsed.quality_metrics) {
+              const metrics = parsed.quality_metrics;
+              // Calculate REAL accuracy from SMAPE (lower SMAPE = better)
+              // SMAPE of 0% means 100% accuracy, SMAPE of 100% means 0% accuracy
+              // Handle edge cases: if smape is null/undefined/NaN, default to 85% accuracy
+              const smape = metrics.smape;
+              let accuracy = 85; // Default
+              if (smape !== null && smape !== undefined && !isNaN(smape)) {
+                // Calculate accuracy as inverse of SMAPE (clamped to 0-100%)
+                // SMAPE 0% = 100% accuracy, SMAPE 100% = 0% accuracy
+                accuracy = Math.max(0, Math.min(100, 100 - smape));
+                // If SMAPE is very high (>80%), suggest retraining
+                if (smape > 80) {
+                  console.warn('⚠️ High SMAPE detected, model may need retraining');
                 }
-                setFinalMetrics({
-                  modelAccuracy: accuracy,
-                  trainingDuration: parsed.duration_seconds || 0,
-                  modelType: parsed.model_type || 'NB-INGARCH',
-                  dataPoints: parsed.rows || 0,
-                });
               }
+              setFinalMetrics({
+                modelAccuracy: accuracy,
+                trainingDuration: parsed.duration_seconds || 0,
+                modelType: parsed.model_type || 'NB-INGARCH',
+                dataPoints: parsed.rows || 0,
+              });
+            }
             // Check for completion
             if (currentEvent === 'ingarch' && parsed.status === 'complete') {
               setCurrentMilestone('done');
               setTrainingStatus('completed');
               globalTrainingInProgress = false;
               trainingFinished = true;
-              return; // Exit the processing function
+              return;
             }
             if (currentEvent === 'done') {
               setCurrentMilestone('done');
               setTrainingStatus('completed');
               globalTrainingInProgress = false;
               trainingFinished = true;
-              return; // Exit the processing function
+              return;
             }
           } catch (err) {
             console.error('Failed to parse SSE data:', currentData, err);
           }
         }
+      };
+      try {
+        let streamOpen = true;
+        while (streamOpen) {
+          const { done, value } = await reader.read();
+          if (done) {
+            // Process any remaining data in buffer
+            if (buffer.trim()) {
+              const lines = buffer.split('\n');
+              for (const line of lines) {
+                if (line.trim()) {
+                  processSSELine(line.trim());
+                }
+              }
+            }
+            streamOpen = false;
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          // Process complete lines
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+          for (const line of lines) {
+            if (line.trim()) {
+              processSSELine(line.trim());
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error reading SSE stream:', error);
+        setStreamWarning('Connection to the training stream was interrupted. You can retry the training run.');
+        setTrainingStatus('error');
+        setErrorMessage('Failed to read training progress. Please check your connection.');
+        globalTrainingInProgress = false;
+      }
+      if (!trainingFinished && globalTrainingInProgress) {
+        setStreamWarning('Training stream disconnected before completion. You can restart the run to continue.');
+        setTrainingStatus('error');
+        globalTrainingInProgress = false;
       }
     } catch (error) {
       setTrainingStatus('error');
       globalTrainingInProgress = false;
       setErrorMessage(error instanceof Error ? error.message : 'Failed to start training');
     }
-  }, [uploadedFile, datasetMode, trainingQuality]);
+  }, [uploadedFile, datasetMode, trainingQuality, toApiUrl]);
   // Warn before navigating away during training
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -323,7 +322,7 @@ export function TrainPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => window.open('/api/files/template/lite', '_blank')}
+                  onClick={() => window.open(toApiUrl('/api/files/template/lite'), '_blank')}
                   className="btn-secondary w-full text-sm"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -345,7 +344,7 @@ export function TrainPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => window.open('/api/files/template/pro', '_blank')}
+                  onClick={() => window.open(toApiUrl('/api/files/template/pro'), '_blank')}
                   className="btn-secondary w-full text-sm"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,7 +494,7 @@ export function TrainPage() {
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-ink-900 mb-2">Training in Progress</h3>
                 <p className="text-sm text-ink-700 mb-4">
-                  Your model is currently training. Navigating away will cancel the training process and you'll lose all progress.
+                  Your model is currently training. Navigating away will cancel the training process and you&apos;ll lose all progress.
                 </p>
                 <div className="flex gap-3 justify-end">
                   <button

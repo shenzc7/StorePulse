@@ -57,6 +57,7 @@ import math
 import tempfile
 import time
 from dataclasses import asdict, dataclass, field
+from io import BytesIO
 from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable
 
@@ -71,7 +72,7 @@ from sse_starlette.sse import EventSourceResponse
 
 # Internal imports for core functionality and ML integration
 from api.core import feats, schemas, calibrate  # Core API modules
-from api.core.schemas import LiteRecord  # Import LiteRecord for database storage
+from api.core.schemas import LiteRecord, ProRecord  # Storage schemas
 from ml import train_ingarch                   # ML training module
 
 # Create FastAPI router for training endpoints
@@ -289,6 +290,133 @@ def _extract_event_dates(frame: pd.DataFrame) -> pd.Series:
     return pd.to_datetime(frame[column])
 
 
+def _to_optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, str) and value.strip() == "":
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(numeric) or math.isinf(numeric):
+        return None
+    return numeric
+
+
+def _to_optional_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return None
+    if isinstance(value, (int, np.integer)):
+        return bool(int(value))
+    if isinstance(value, float):
+        if math.isnan(value):
+            return None
+        return bool(int(value))
+    lowered = str(value).strip().lower()
+    if lowered in {"1", "true", "yes", "y", "on"}:
+        return True
+    if lowered in {"0", "false", "no", "n", "off"}:
+        return False
+    return None
+
+
+def _normalize_training_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    normalized = frame.copy()
+    if "date" in normalized.columns and "event_date" not in normalized.columns:
+        normalized = normalized.rename(columns={"date": "event_date"})
+    if "event_date" not in normalized.columns or "visits" not in normalized.columns:
+        raise HTTPException(
+            status_code=400,
+            detail="Dataset must include 'event_date' (or 'date') and 'visits' columns.",
+        )
+
+    normalized["event_date"] = pd.to_datetime(normalized["event_date"], errors="coerce")
+    normalized["visits"] = pd.to_numeric(normalized["visits"], errors="coerce")
+    normalized = normalized.dropna(subset=["event_date", "visits"]).copy()
+    normalized["visits"] = normalized["visits"].astype(int)
+    return normalized
+
+
+def _persist_training_frame(frame: pd.DataFrame, mode: str, warnings: list[str], source_label: str) -> pd.DataFrame:
+    """Persist uploaded training frame into the visits table for immediate forecasting."""
+    from datetime import datetime, timedelta
+    from api.core.db import VisitRepository, db_manager
+
+    working = frame.copy()
+
+    # Shift stale historical uploads forward so forecast horizon starts from recent context.
+    upload_dates = _extract_event_dates(working)
+    max_upload_date = upload_dates.max()
+    today = pd.Timestamp(datetime.now().date())
+    if max_upload_date < today - timedelta(days=30):
+        date_shift = today - max_upload_date
+        working["event_date"] = upload_dates + date_shift
+        warnings.append(
+            f"Historical {source_label} data shifted by {date_shift.days} days for forecasting recency."
+        )
+
+    with db_manager.get_connection() as conn:
+        conn.execute("DELETE FROM visits")
+        conn.commit()
+
+    storage_warnings: list[str] = []
+    for idx, row in working.iterrows():
+        try:
+            event_day = pd.to_datetime(row["event_date"]).date()
+            visits = int(row["visits"])
+            if mode == "pro":
+                conversion = _to_optional_float(row.get("conversion"))
+                if conversion is not None and conversion > 1:
+                    conversion = conversion / 100.0
+                price_change = _to_optional_float(row.get("price_change"))
+                if price_change is not None and abs(price_change) > 1:
+                    price_change = price_change / 100.0
+
+                record = ProRecord(
+                    event_date=event_day,
+                    visits=visits,
+                    sales=_to_optional_float(row.get("sales")),
+                    conversion=conversion,
+                    promo_type=(
+                        str(row.get("promo_type")).strip().lower()
+                        if row.get("promo_type") not in (None, "")
+                        else None
+                    ),
+                    price_change=price_change,
+                    weather=(
+                        str(row.get("weather")).strip().lower()
+                        if row.get("weather") not in (None, "")
+                        else None
+                    ),
+                    paydays=_to_optional_bool(row.get("paydays")),
+                    school_breaks=_to_optional_bool(row.get("school_breaks")),
+                    local_events=(
+                        str(row.get("local_events")).strip()
+                        if row.get("local_events") not in (None, "")
+                        else None
+                    ),
+                    open_hours=_to_optional_float(row.get("open_hours")),
+                )
+                saved = VisitRepository.add_pro_record(record)
+            else:
+                record = LiteRecord(event_date=event_day, visits=visits)
+                saved = VisitRepository.add_lite_record(record)
+
+            if not saved:
+                storage_warnings.append(f"Row {idx + 1}: failed to persist record.")
+        except Exception as exc:
+            storage_warnings.append(f"Row {idx + 1}: {exc}")
+
+    if storage_warnings:
+        warnings.append(f"{len(storage_warnings)} rows could not be stored in the database.")
+
+    working["event_date"] = pd.to_datetime(working["event_date"]).dt.strftime("%Y-%m-%d")
+    return working
+
+
 def _infer_training_mode(raw_mode: Any) -> str:
     """
     Infer training mode (fast vs full) from user input.
@@ -420,18 +548,20 @@ async def _prepare_dataset(request: Request) -> PreparedDataset:
         if not content:
             tempdir.cleanup()
             raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-        dataset_path.write_bytes(content)
 
         # Validate uploaded file meets minimum requirements for training
         # This ensures we have enough historical data for meaningful model training
         try:
-            import pandas as pd
-            df = pd.read_csv(dataset_path)
-            
-            # Normalize date column name
-            if "date" in df.columns and "event_date" not in df.columns:
-                df = df.rename(columns={"date": "event_date"})
-                
+            suffix = Path(upload.filename or "").suffix.lower()
+            if suffix == ".json":
+                df = pd.read_json(BytesIO(content))
+            elif suffix in {".xlsx", ".xls"}:
+                df = pd.read_excel(BytesIO(content))
+            else:
+                df = pd.read_csv(BytesIO(content))
+
+            df = _normalize_training_frame(df)
+
             if len(df) < 30:
                 tempdir.cleanup()
                 raise HTTPException(
@@ -453,41 +583,12 @@ async def _prepare_dataset(request: Request) -> PreparedDataset:
                     detail="Dataset contains negative visit counts. Please check your data for errors."
                 )
 
-            storage_warnings: list[str] = []
             try:
-                from api.core.db import VisitRepository, db_manager
-                from datetime import datetime, timedelta
-
-                with db_manager.get_connection() as conn:
-                    conn.execute("DELETE FROM visits")
-                    conn.commit()
-
-                upload_dates = _extract_event_dates(df)
-                max_upload_date = upload_dates.max()
-                today = pd.Timestamp(datetime.now().date())
-
-                if max_upload_date < today - timedelta(days=30):
-                    date_shift = today - max_upload_date
-                    df = df.copy()
-                    df['event_date'] = upload_dates + date_shift
-                    warnings.append(f"Historical data shifted forward by {date_shift.days} days for forecasting recency.")
-
-                stored_count = 0
-                for idx, row in df.iterrows():
-                    try:
-                        date_obj = pd.to_datetime(row['event_date']).date()
-                        record = LiteRecord(event_date=date_obj, visits=int(row['visits']))
-                        if VisitRepository.add_lite_record(record):
-                            stored_count += 1
-                        else:
-                            storage_warnings.append(f"Row {idx + 1}: failed to persist record.")
-                    except Exception as e:
-                        storage_warnings.append(f"Row {idx + 1}: {e}")
-
-                if storage_warnings:
-                    warnings.append(f"{len(storage_warnings)} rows could not be stored in the database.")
+                df = _persist_training_frame(df, mode=mode, warnings=warnings, source_label="uploaded")
             except Exception as e:
                 warnings.append(f"Could not store uploaded data in database: {e}")
+
+            df.to_csv(dataset_path, index=False)
 
         except pd.errors.EmptyDataError:
             tempdir.cleanup()
@@ -496,7 +597,13 @@ async def _prepare_dataset(request: Request) -> PreparedDataset:
             if "Not enough data" in str(e) or "row limit" in str(e):
                 raise
             tempdir.cleanup()
-            raise HTTPException(status_code=400, detail=f"Invalid CSV upload: {str(e)}. Please ensure your file is a valid CSV with 'event_date' and 'visits' columns.")
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Invalid dataset upload: {str(e)}. "
+                    "Ensure the file is CSV/JSON/XLSX and includes 'event_date' (or 'date') and 'visits' columns."
+                ),
+            )
 
         # Return prepared dataset object for file upload scenario
         return PreparedDataset(
@@ -559,6 +666,7 @@ async def _prepare_dataset(request: Request) -> PreparedDataset:
         raise HTTPException(status_code=422, detail=exc.errors()) from exc
 
     frame = _records_to_frame(records)
+    frame = _normalize_training_frame(frame)
     if len(frame) < 30:
         tempdir.cleanup()
         raise HTTPException(status_code=400, detail="Need at least 30 records for training.")
@@ -569,44 +677,15 @@ async def _prepare_dataset(request: Request) -> PreparedDataset:
             detail=f"Training payload exceeds the {MAX_TRAINING_ROWS:,} row limit."
         )
     dataset_path = base_path / ("lite_sample.csv" if mode == "lite" else "pro_sample.csv")
-    frame.to_csv(dataset_path, index=False)
 
     # Store the uploaded data in the database for forecasting
     # This ensures forecasts use real user data, not sample data
     try:
-        from api.core.db import VisitRepository, db_manager
-        from datetime import datetime, timedelta
-
-        # Clear existing data to ensure forecasts use uploaded data, not sample data
-        with db_manager.get_connection() as conn:
-            conn.execute("DELETE FROM visits")
-            conn.commit()
-
-        # Check if uploaded data is from the past (more than 30 days ago)
-        # If so, shift it to recent dates so forecasting works properly
-        upload_dates = _extract_event_dates(frame)
-        max_upload_date = upload_dates.max()
-        today = pd.Timestamp(datetime.now().date())
-
-        if max_upload_date < today - timedelta(days=30):
-            date_shift = today - max_upload_date
-            frame = frame.copy()
-            frame['event_date'] = upload_dates + date_shift
-            warnings.append(f"Historical JSON data shifted by {date_shift.days} days for recency.")
-
-        storage_warnings: list[str] = []
-        for idx, row in frame.iterrows():
-            try:
-                date_obj = pd.to_datetime(row['event_date']).date()
-                record = LiteRecord(event_date=date_obj, visits=int(row['visits']))
-                if not VisitRepository.add_lite_record(record):
-                    storage_warnings.append(f"Row {idx + 1}: failed to persist record.")
-            except Exception as exc:
-                storage_warnings.append(f"Row {idx + 1}: {exc}")
-        if storage_warnings:
-            warnings.append(f"{len(storage_warnings)} JSON rows could not be stored.")
+        frame = _persist_training_frame(frame, mode=mode, warnings=warnings, source_label="json")
     except Exception as e:
         warnings.append(f"Could not store training data in database: {e}")
+
+    frame.to_csv(dataset_path, index=False)
 
     return PreparedDataset(
         mode=mode,

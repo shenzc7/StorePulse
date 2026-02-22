@@ -1,5 +1,5 @@
 {
-  "dataset": "data/samples/lite_sample.csv",
+  "dataset": "/Users/shenzc/Downloads/side projects/StorePulse/data/samples/lite_sample.csv",
   "rows": 335,
   "feature_cols": [
     "lag_1",

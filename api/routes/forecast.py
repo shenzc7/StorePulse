@@ -3,18 +3,34 @@ from datetime import datetime
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 
 from ..core.forecast_service import ForecastService
+from ..core.report_service import ReportService
+from pathlib import Path
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
 # Global forecast service instance
 forecast_service = ForecastService()
 
+async def auto_generate_report(forecast_data: Dict[str, Any], mode: str):
+    """Background task to generate a PDF report for a fresh forecast."""
+    try:
+        reports_dir = Path(__file__).resolve().parents[2] / "reports" / "exports"
+        report_service = ReportService(reports_dir)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"Forecast_Report_{mode.upper()}_{timestamp}.pdf"
+        
+        report_service.generate_pdf(forecast_data, filename)
+        print(f"✅ Auto-generated report: {filename}")
+    except Exception as e:
+        print(f"❌ Failed to auto-generate report: {e}")
 
 @router.get("/")
 async def forecast(
+    background_tasks: BackgroundTasks,
     days: int = Query(7, ge=1, le=30, description="Forecast horizon in days"),
     mode: str = Query("auto", pattern="^(lite|pro|auto)$", description="Forecast mode ('lite', 'pro', or 'auto')"),
 ) -> dict[str, Any]:
@@ -48,6 +64,11 @@ async def forecast(
         
         # Inject the mode used into the response so frontend knows
         result["mode_used"] = final_mode
+        
+        # Auto-generate report in the background if we have new predictions
+        if result.get("status") == "success" and not result.get("cache_hit"):
+            background_tasks.add_task(auto_generate_report, result, final_mode)
+            
         return result
 
     except Exception as e:

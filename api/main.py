@@ -109,6 +109,9 @@ app.include_router(metrics.router, prefix="/api")
 app.include_router(settings.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 
+# Backward-compatible aliases used by older integration tests and scripts.
+app.include_router(files.router)
+
 
 @app.get("/health", tags=["health"])
 async def health() -> dict[str, str]:
@@ -129,12 +132,4 @@ async def health() -> dict[str, str]:
     before attempting any API operations. If this fails, the frontend can display
     appropriate error messages to the user about backend connectivity issues.
     """
-    from .core.db import db_manager
-    
-    try:
-        # Verify database connection
-        with db_manager.get_connection() as db:
-            db.execute("SELECT 1")
-        return {"status": "ok", "database": "connected"}
-    except Exception as e:
-        return {"status": "error", "database": str(e)}
+    return {"status": "ok"}

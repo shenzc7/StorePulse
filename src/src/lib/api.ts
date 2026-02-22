@@ -219,7 +219,7 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
  */
 export async function apiPost<T>(
   endpoint: string,
-  body?: any,
+  body?: unknown,
   options?: {
     headers?: Record<string, string>;
   }
@@ -248,7 +248,7 @@ export async function apiPost<T>(
  */
 export async function apiPut<T>(
   endpoint: string,
-  body?: any,
+  body?: unknown,
   options?: {
     headers?: Record<string, string>;
   }

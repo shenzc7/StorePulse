@@ -100,7 +100,6 @@ class ApplicationSettings(BaseModel):
         if v.auto_training_enabled and v.auto_training_interval_days < 7:
             raise ValueError("auto_training_interval_days must be at least 7 days")
         return v
-        return v
 
 
 SECTION_MODEL_MAP = {

@@ -19,7 +19,7 @@ interface Report {
 
 interface ReportsResponse {
   reports: Report[];
-  categories: Record<string, any>;
+  categories: Record<string, unknown>;
   total_count: number;
 }
 
@@ -50,16 +50,34 @@ export function ReportsPage() {
   const generateReport = async () => {
     try {
       setGenerating(true);
-      await apiPost('/api/reports/generate', {
+      setError(null);
+
+      interface GenerateResponse {
+        status: string;
+        filename: string;
+        path: string;
+        download_url: string;
+      }
+
+      const response = await apiPost<GenerateResponse>('/api/reports/generate', {
         title: 'Strategic Demand Forecast',
         days: 14,
         mode: 'pro' // Default to Pro for best quality
       });
+
+      if (response && response.download_url) {
+        // Direct download link
+        const apiBase = getApiBaseUrl();
+        const endpoint = response.download_url;
+        window.location.href = apiBase ? `${apiBase}${endpoint}` : endpoint;
+      }
+
       // Refresh list to show new report
       await fetchReports();
     } catch (err) {
       const apiError = err as ApiError;
-      alert(`Failed to generate report: ${apiError.message}`);
+      console.error('Failed to generate report:', apiError);
+      setError(`Failed to generate report: ${apiError.message}`);
     } finally {
       setGenerating(false);
     }
@@ -76,7 +94,7 @@ export function ReportsPage() {
     ? reports
     : reports.filter(r => r.category === filter);
 
-  const categories = Array.from(new Set(reports.map(r => r.category)));
+  const categories = Array.from(new Set(reports.map(r => r.category))).filter(cat => cat !== 'exports');
 
   if (loading && reports.length === 0) {
     return (
@@ -117,13 +135,32 @@ export function ReportsPage() {
         </button>
       </header>
 
+      {error && (
+        <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-danger-500 hover:text-danger-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filter === 'all'
-              ? 'bg-ink-900 text-white'
-              : 'bg-surface-100 text-ink-600 hover:bg-surface-200'
+            ? 'bg-ink-900 text-white'
+            : 'bg-surface-100 text-ink-600 hover:bg-surface-200'
             }`}
         >
           All Reports
@@ -133,8 +170,8 @@ export function ReportsPage() {
             key={cat}
             onClick={() => setFilter(cat)}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap capitalize transition-colors ${filter === cat
-                ? 'bg-ink-900 text-white'
-                : 'bg-surface-100 text-ink-600 hover:bg-surface-200'
+              ? 'bg-ink-900 text-white'
+              : 'bg-surface-100 text-ink-600 hover:bg-surface-200'
               }`}
           >
             {cat}
@@ -159,8 +196,8 @@ export function ReportsPage() {
             <div key={report.id} className="card p-4 hover:border-primary-200 transition-colors group">
               <div className="flex items-start gap-4">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${report.category === 'exports' ? 'bg-purple-100 text-purple-600' :
-                    report.category === 'forecasts' ? 'bg-green-100 text-green-600' :
-                      'bg-blue-100 text-blue-600'
+                  report.category === 'forecasts' ? 'bg-green-100 text-green-600' :
+                    'bg-blue-100 text-blue-600'
                   }`}>
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />

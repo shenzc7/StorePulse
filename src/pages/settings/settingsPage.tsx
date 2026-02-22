@@ -93,7 +93,6 @@ export function SettingsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   // Ensure time strings are always valid HH:MM to avoid native input pattern errors
   const normalizeTime = (value?: string | null): string => {
@@ -141,7 +140,7 @@ export function SettingsPage() {
     }
   };
 
-  const updateSetting = async (section: string, newSettings: any) => {
+  const updateSetting = async <T,>(section: string, newSettings: T) => {
     if (!settings) return;
 
     try {
@@ -150,10 +149,10 @@ export function SettingsPage() {
       setSuccessMessage(null);
 
       const payload =
-        section === 'automation'
+        section === 'automation' && typeof newSettings === 'object' && newSettings !== null
           ? {
-            ...newSettings,
-            auto_forecast_time: normalizeTime(newSettings?.auto_forecast_time),
+            ...(newSettings as Automation),
+            auto_forecast_time: normalizeTime((newSettings as Automation).auto_forecast_time),
           }
           : newSettings;
 
@@ -162,7 +161,7 @@ export function SettingsPage() {
       setSettings(prev => prev ? { ...prev, [section]: payload } : null);
 
       if (section === 'auto_run') {
-        localStorage.setItem('storepulse_auto_run', newSettings.toString());
+        localStorage.setItem('storepulse_auto_run', String(newSettings));
       }
 
       setSuccessMessage(`${section.replace('_', ' ')} updated successfully`);
@@ -224,12 +223,6 @@ export function SettingsPage() {
   }
 
   if (!settings) return null;
-
-  const formatUptime = (seconds: number) => {
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    return `${days}d ${hours}h`;
-  };
 
   return (
     <div className="space-y-6">
@@ -581,7 +574,7 @@ export function SettingsPage() {
                   disabled={saving === 'staffing_config'}
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
                 />
-                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger "High Traffic" status</p>
+                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger &quot;High Traffic&quot; status</p>
               </div>
 
               <div>
@@ -662,7 +655,7 @@ export function SettingsPage() {
                   disabled={saving === 'inventory_config'}
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
                 />
-                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger "Medium Risk" alert</p>
+                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger &quot;Medium Risk&quot; alert</p>
               </div>
 
               <div>
@@ -685,7 +678,7 @@ export function SettingsPage() {
                   disabled={saving === 'inventory_config'}
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
                 />
-                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger "High Risk" alert</p>
+                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger &quot;High Risk&quot; alert</p>
               </div>
             </div>
           </div>

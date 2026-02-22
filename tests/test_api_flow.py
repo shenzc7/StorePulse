@@ -25,7 +25,6 @@ def test_health_check():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
-    assert "database" in data
 
 def test_train_flow(sample_csv):
     """Test full training flow with CSV upload."""

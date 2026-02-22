@@ -1,8 +1,6 @@
-import React from 'react';
-import { formatIndianNumber } from '../../../src/lib/api';
-
 interface StaffingRecommendation {
     date: string;
+    predicted_visits: number;
     recommended_staff: number;
     labor_cost_estimate: number;
     role_breakdown: Record<string, number>;
@@ -13,6 +11,7 @@ interface InventoryAlert {
     estimated_daily_sales: number;
     stockout_risk: string;
     inventory_priorities: Record<string, string>;
+    reasoning?: string;
 }
 
 interface ActionWidgetsProps {
@@ -41,7 +40,7 @@ export function ActionWidgets({ staffing, inventory }: ActionWidgetsProps) {
                     </div>
                 </div>
                 <div className="flex-1 overflow-auto p-4 space-y-3">
-                    {staffing.slice(0, 5).map((row: any, i) => (
+                    {staffing.slice(0, 5).map((row, i) => (
                         <div key={i} className="p-4 rounded-lg border border-border bg-surface-50/50 hover:bg-white hover:shadow-md transition-all">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
@@ -66,14 +65,17 @@ export function ActionWidgets({ staffing, inventory }: ActionWidgetsProps) {
                             </div>
 
                             <div className="flex flex-wrap gap-2 pt-3 border-t border-border/50">
-                                {Object.entries(row.role_breakdown || {}).map(([role, count]: any) => (
-                                    <div key={role} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-border text-xs text-ink-700 shadow-sm">
+                                {Object.entries(row.role_breakdown || {}).map(([role, count]) => {
+                                    const roleCount = typeof count === 'number' ? count : Number(count) || 0;
+                                    return (
+                                        <div key={role} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-border text-xs text-ink-700 shadow-sm">
                                         <span className={`w-2 h-2 rounded-full ${role.includes('billing') ? 'bg-green-500' :
                                             role.includes('supervisor') ? 'bg-purple-500' : 'bg-blue-500'
                                             }`}></span>
-                                        <span className="font-semibold">{count}</span> {formatRole(role)}
-                                    </div>
-                                ))}
+                                            <span className="font-semibold">{roleCount}</span> {formatRole(role)}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
@@ -95,7 +97,7 @@ export function ActionWidgets({ staffing, inventory }: ActionWidgetsProps) {
                 </div>
                 <div className="flex-1 overflow-auto p-4 space-y-3">
                     {highRiskItems.length > 0 ? (
-                        highRiskItems.slice(0, 5).map((item: any, i: number) => (
+                        highRiskItems.slice(0, 5).map((item, i) => (
                             <div key={i} className="p-4 rounded-lg bg-red-50/30 border border-red-100 hover:border-red-200 transition-colors">
                                 <div className="flex items-start justify-between mb-2">
                                     <div>
@@ -114,10 +116,10 @@ export function ActionWidgets({ staffing, inventory }: ActionWidgetsProps) {
                                 <div className="space-y-2 mt-3">
                                     {Object.entries(item.inventory_priorities)
                                         .filter(([_, status]) => status !== 'normal' && status !== 'monitor')
-                                        .map(([category, status]: any) => (
+                                        .map(([category, status]) => (
                                             <div key={category} className="flex items-center justify-between text-sm bg-white p-2 rounded border border-red-100">
                                                 <span className="font-medium text-ink-800 capitalize">{category.replace('_', ' ')}</span>
-                                                <span className="text-xs font-bold text-red-600 uppercase tracking-wide">{status.replace('_', ' ')}</span>
+                                                <span className="text-xs font-bold text-red-600 uppercase tracking-wide">{String(status).replace('_', ' ')}</span>
                                             </div>
                                         ))}
                                 </div>

@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ForecastHeaderProps {
     lastUpdated: Date;
     mode: 'lite' | 'pro' | 'auto';
@@ -25,20 +23,13 @@ export function ForecastHeader({
     isCached,
     metadata
 }: ForecastHeaderProps) {
-    const isStale = metadata?.data_freshness?.is_stale;
+    const isStale = metadata?.data_freshness?.is_stale ?? false;
 
     return (
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
                 <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold text-ink-900 tracking-tight">Demand Forecasts</h1>
-                    {metadata && (
-                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-black uppercase tracking-wider ${isStale ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-green-50 text-green-600 border-green-200'
-                            }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${isStale ? 'bg-amber-500' : 'bg-green-500'}`}></span>
-                            {isStale ? 'Rel. Moderate' : 'Rel. High'}
-                        </div>
-                    )}
                 </div>
                 <p className="text-sm text-ink-600 mt-1">
                     Predictions from <span className="font-semibold text-ink-800">NB-INGARCH model</span> •
@@ -62,17 +53,14 @@ export function ForecastHeader({
                             {option === 'lite' ? 'Lite Mode' : 'Pro Mode'}
                         </button>
                     ))}
-                    {isCached ? (
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    {isCached && (
+                        <span className="text-[10px] px-2 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 font-semibold uppercase tracking-wider">
                             Cached
                         </span>
-                    ) : (
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent-50 text-accent-700 border border-accent-200">
-                            <svg className="w-3 h-3 text-accent-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            Live Compute
+                    )}
+                    {isStale && (
+                        <span className="text-[10px] px-2 py-1 rounded-full border border-red-200 bg-red-50 text-red-700 font-semibold uppercase tracking-wider">
+                            Data Stale
                         </span>
                     )}
                 </div>

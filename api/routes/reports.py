@@ -6,14 +6,10 @@ from typing import Dict, List, Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from ..core.report_service import ReportService
 from ..core.forecast_service import ForecastService
-from ..core.db import VisitRepository
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 

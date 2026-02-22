@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from '@tanstack/react-router';
 
 interface SmartSummaryProps {
     tomorrowVisits: number;
@@ -23,59 +23,56 @@ export function SmartSummary({
     return (
         <div className="mb-8 space-y-4">
             {/* Primary Decision Banner */}
-            <div className={`p-4 rounded-xl border-2 flex items-start gap-4 shadow-sm transition-all ${isHighTraffic
-                ? 'bg-amber-50 border-amber-200 ring-4 ring-amber-500/5'
-                : 'bg-primary-50 border-primary-100'
+            <div className={`p-4 rounded-sm border-l-4 flex items-start gap-4 shadow-sm transition-all ${isHighTraffic
+                ? 'bg-amber-50 border-amber-500 border-y border-r border-y-amber-200 border-r-amber-200'
+                : 'bg-slate-50 border-slate-500 border-y border-r border-y-slate-200 border-r-slate-200'
                 }`}>
-                <div className={`p-3 rounded-lg ${isHighTraffic ? 'bg-amber-100 text-amber-600' : 'bg-primary-100 text-primary-600'}`}>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={`p-2 rounded-none border ${isHighTraffic ? 'bg-amber-100 border-amber-200 text-amber-700' : 'bg-white border-slate-200 text-slate-600 shadow-sm'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
                 <div className="flex-1">
-                    <h2 className={`font-bold text-lg ${isHighTraffic ? 'text-amber-900' : 'text-primary-900'}`}>
+                    <h2 className={`font-bold text-sm tracking-wide uppercase ${isHighTraffic ? 'text-amber-900' : 'text-slate-800'}`}>
                         Operational Insight for Tomorrow
                     </h2>
-                    <p className={`text-sm mt-1 leading-relaxed ${isHighTraffic ? 'text-amber-800' : 'text-primary-800'}`}>
+                    <p className={`text-sm mt-1 leading-relaxed ${isHighTraffic ? 'text-amber-800' : 'text-slate-700'}`}>
                         Tomorrow is expected to be a <strong className="underline">{isHighTraffic ? 'High Traffic' : 'Normal'}</strong> day
                         with approx. <strong>{Math.round(tomorrowVisits)} visitors</strong>.
-                        {staffRecommendation} {inventoryUrgency}
+                        <span className="ml-1 text-slate-600">{staffRecommendation} {inventoryUrgency}</span>
                     </p>
 
                     {peakDay && (
-                        <div className="mt-3 py-2 px-3 bg-white/50 rounded-lg border border-primary-200/50 flex items-center gap-3">
-                            <span className="flex h-2 w-2 rounded-full bg-accent-500 animate-pulse"></span>
-                            <p className="text-xs font-bold text-primary-900">
-                                STRATEGIC ALERT: Weekly peak of <span className="text-accent-600 underline decoration-accent-300 decoration-2">{Math.round(peakDay.visits)} visits</span> expected on {new Date(peakDay.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}.
+                        <div className="mt-3 py-1.5 px-3 bg-white rounded-none border-l-2 border-red-500 shadow-sm flex items-center gap-3">
+                            <span className="flex h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                            <p className="text-xs font-bold text-slate-800 uppercase tracking-widest">
+                                Strategic Alert: <span className="text-slate-600 font-normal normal-case tracking-normal">Weekly peak of <strong className="text-red-700">{Math.round(peakDay.visits)} visits</strong> expected on {new Date(peakDay.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}.</span>
                             </p>
                         </div>
                     )}
                 </div>
-                <button
-                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-border rounded-lg text-sm font-bold text-ink-700 shadow-sm hover:shadow-md active:scale-95 transition-all"
-                    onClick={() => {
-                        const text = `Forecast for Tomorrow: ${Math.round(tomorrowVisits)} visits. Action: ${staffRecommendation} ${inventoryUrgency}${peakDay ? ` Strategic Alert: Peak visits (${Math.round(peakDay.visits)}) expected on ${peakDay.date}.` : ''}`;
-                        navigator.clipboard.writeText(text);
-                    }}
+                <Link
+                    to="/reports"
+                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-sm text-sm font-bold shadow-sm transition-all focus:outline-none"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Share Plan
-                </button>
+                    View Reports
+                </Link>
             </div>
 
             {/* Model Health / Warnings */}
             {warnings && warnings.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {warnings.map((warning, i) => (
-                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-ink-50 border border-border text-[11px] font-bold text-ink-600 uppercase tracking-tight">
-                            <span className="w-1.5 h-1.5 rounded-full bg-ink-400"></span>
+                        <div key={i} className="flex items-center gap-2 px-2 py-1 bg-slate-100 border border-slate-300 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                            <span className="w-1.5 h-1.5 bg-slate-400"></span>
                             {warning}
                         </div>
                     ))}
-                    <a href="/train" className="text-[11px] font-bold text-primary-600 hover:underline px-2 py-1.5">
-                        Optimize Model Quality →
+                    <a href="/train" className="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline px-2 py-1 tracking-widest uppercase flex items-center gap-1">
+                        Optimize Model Quality <span className="text-lg leading-none">&rsaquo;</span>
                     </a>
                 </div>
             )}

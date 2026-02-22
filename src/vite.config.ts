@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: 'localhost',
+    host: true, // Listen on all addresses (0.0.0.0)
     port: 5174,
     strictPort: true,
     proxy: {
@@ -15,27 +15,27 @@ export default defineConfig({
       },
     },
   },
-  
+
   resolve: {
-    
+
     alias: {
-      
+
       '@': resolve(__dirname, '.'),
-      
+
       '@/src': resolve(__dirname, 'src'),
-      
+
       '@/lib': resolve(__dirname, 'src/lib'),
-      
+
       '@/hooks': resolve(__dirname, 'src/hooks'),
-      
+
       '@/stores': resolve(__dirname, 'src/stores'),
-      
+
       '@/styles': resolve(__dirname, 'src/styles'),
-      
+
       '@/types': resolve(__dirname, 'src/types'),
-      
+
       '@/components': resolve(__dirname, 'components'),
-      
+
       '@/pages': resolve(__dirname, 'pages'),
     },
   },

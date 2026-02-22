@@ -4,7 +4,7 @@ import { apiGet, type ApiError } from '../../src/lib/api';
 import { ForecastHeader } from './components/ForecastHeader';
 import { MetricCards } from './components/MetricCards';
 import { ForecastChart } from './components/ForecastChart';
-import { ActionWidgets } from './components/ActionWidgets';
+import { IntelligentInsights } from './components/IntelligentInsights';
 import { SmartSummary } from './components/SmartSummary';
 
 interface Prediction {
@@ -181,17 +181,40 @@ export function ForecastPage() {
   }
 
   const predictions = forecastData.predictions || [];
+  if (predictions.length === 0) {
+    return (
+      <div className="space-y-6 animate-fade-in p-6">
+        <ForecastHeader
+          lastUpdated={lastUpdated}
+          mode={mode}
+          onModeChange={handleModeChange}
+          loading={loading}
+          onRefresh={() => fetchForecasts(mode)}
+          isCached={forecastData.cache_hit}
+          metadata={forecastData.metadata}
+        />
+        <div className="card p-6 border border-border bg-surface-50">
+          <p className="text-sm font-medium text-ink-800">No prediction rows were generated for this horizon.</p>
+          <p className="text-xs text-ink-600 mt-1">Try retraining the model or switching forecast mode.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Computed Metrics
   const tomorrow = predictions[0];
+  const trendWindow = Math.min(3, predictions.length);
   const avgVisits = predictions.reduce((sum, p) => sum + p.predicted_visits, 0) / (predictions.length || 1);
-  const recentAvg = predictions.slice(0, 3).reduce((sum, p) => sum + p.predicted_visits, 0) / 3;
-  const laterAvg = predictions.slice(-3).reduce((sum, p) => sum + p.predicted_visits, 0) / 3;
-  const trendPercentage = ((laterAvg - recentAvg) / recentAvg) * 100;
+  const recentAvg = predictions
+    .slice(0, trendWindow)
+    .reduce((sum, p) => sum + p.predicted_visits, 0) / (trendWindow || 1);
+  const laterAvg = predictions
+    .slice(-trendWindow)
+    .reduce((sum, p) => sum + p.predicted_visits, 0) / (trendWindow || 1);
+  const trendPercentage = recentAvg > 0 ? ((laterAvg - recentAvg) / recentAvg) * 100 : 0;
 
   const tomorrowStaff = forecastData.staffing_recommendations?.[0]?.recommended_staff || 0;
-  // Fallback revenue calculation if data missing
-  const tomorrowRevenue = tomorrow ? tomorrow.predicted_visits * 150 : 0;
+  const tomorrowRangeWidth = tomorrow ? Math.max(0, tomorrow.upper_bound - tomorrow.lower_bound) : 0;
 
   const riskCount = (forecastData.inventory_alerts || []).filter(
     a => a.stockout_risk === 'high' || a.stockout_risk === 'medium'
@@ -205,10 +228,11 @@ export function ForecastPage() {
       : "Inventory levels appear stable for tomorrow.";
 
   const peakPrediction = predictions.reduce((prev, curr) =>
-    (curr.predicted_visits > prev.predicted_visits) ? curr : prev
-    , predictions[0]);
+    (curr.predicted_visits > prev.predicted_visits) ? curr : prev,
+    predictions[0]
+  );
 
-  const isPeakComing = peakPrediction && peakPrediction.date !== tomorrow?.date;
+  const isPeakComing = peakPrediction.date !== tomorrow?.date;
 
   return (
     <div className="animate-fade-in p-6 max-w-7xl mx-auto">
@@ -237,7 +261,7 @@ export function ForecastPage() {
       <MetricCards
         tomorrowVisits={tomorrow?.predicted_visits || 0}
         tomorrowStaff={tomorrowStaff}
-        tomorrowRevenue={tomorrowRevenue}
+        tomorrowRangeWidth={tomorrowRangeWidth}
         avgVisits={avgVisits}
         trendPercentage={trendPercentage}
         riskCount={riskCount}
@@ -248,7 +272,7 @@ export function ForecastPage() {
         height={320}
       />
 
-      <ActionWidgets
+      <IntelligentInsights
         staffing={forecastData.staffing_recommendations || []}
         inventory={forecastData.inventory_alerts || []}
       />

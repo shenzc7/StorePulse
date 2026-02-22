@@ -56,16 +56,15 @@ export function ForecastChart({ predictions, height = 300 }: ForecastChartProps)
     const { points, areaPath, linePath, maxVal, width, maxVisitDay } = chartData;
 
     return (
-        <div className="card border border-border bg-white shadow-sm mb-8 overflow-hidden">
-            <div className="p-6 border-b border-border bg-surface-50/30 flex items-center justify-between">
+        <div className="border border-slate-300 bg-white mb-8 rounded-sm shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-300 bg-slate-50 flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-bold text-ink-900">Traffic Trend Analysis</h2>
-                    <p className="text-sm text-ink-600">Decision-ready forecast with risk boundaries</p>
+                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Traffic Trend Analysis</h2>
                 </div>
-                <div className="flex items-center gap-4 text-xs font-bold text-ink-500 uppercase tracking-wider">
+                <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                     <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-primary-100/50 border border-primary-300 rounded-sm"></div>
-                        <span>Risk Band</span>
+                        <div className="w-3 h-3 bg-slate-200 border border-slate-300 rounded-none"></div>
+                        <span>Confidence Band</span>
                     </div>
                 </div>
             </div>
@@ -85,14 +84,15 @@ export function ForecastChart({ predictions, height = 300 }: ForecastChartProps)
                                 y1={height * tick}
                                 x2={width}
                                 y2={height * tick}
-                                stroke="#f1f5f9"
-                                strokeWidth="2"
+                                stroke="#e2e8f0"
+                                strokeWidth="1"
+                                strokeDasharray="2 2"
                             />
                         ))}
 
                         {/* Confidence Area */}
                         {areaPath && (
-                            <path d={areaPath} fill="currentColor" className="text-primary-100 opacity-40 hover:opacity-60 transition-opacity" stroke="none" />
+                            <path d={areaPath} fill="currentColor" className="text-slate-200 opacity-50 transition-opacity" stroke="none" />
                         )}
 
                         {/* Peak Line Indicator */}
@@ -110,8 +110,9 @@ export function ForecastChart({ predictions, height = 300 }: ForecastChartProps)
                                     <text
                                         x={chartData.points.find(p => p.data.date === maxVisitDay.date)!.x}
                                         y={15}
-                                        textAnchor="middle"
-                                        className="text-[10px] font-black fill-ink-400 uppercase"
+                                        textAnchor={chartData.points.find(p => p.data.date === maxVisitDay.date)!.x > width * 0.9 ? 'end' : chartData.points.find(p => p.data.date === maxVisitDay.date)!.x < width * 0.1 ? 'start' : 'middle'}
+                                        dx={chartData.points.find(p => p.data.date === maxVisitDay.date)!.x > width * 0.9 ? -5 : chartData.points.find(p => p.data.date === maxVisitDay.date)!.x < width * 0.1 ? 5 : 0}
+                                        className="text-[10px] font-black fill-slate-400 uppercase"
                                     >
                                         Weekly Peak
                                     </text>
@@ -121,7 +122,7 @@ export function ForecastChart({ predictions, height = 300 }: ForecastChartProps)
 
                         {/* Main Trend Line */}
                         {linePath && (
-                            <polyline points={linePath} fill="none" stroke="currentColor" className="text-primary-600" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            <polyline points={linePath} fill="none" stroke="currentColor" className="text-slate-800" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter" />
                         )}
 
                         {/* Data Points */}
@@ -136,12 +137,12 @@ export function ForecastChart({ predictions, height = 300 }: ForecastChartProps)
                                 <circle
                                     cx={p.x}
                                     cy={p.y}
-                                    r={hoveredIndex === i ? 7 : 4}
-                                    className={`transition-all duration-300 shadow-sm ${p.data.is_payday ? 'fill-yellow-400 stroke-yellow-600' :
-                                            p.data.is_holiday ? 'fill-red-400 stroke-red-600' :
-                                                'fill-white stroke-primary-600'
+                                    r={hoveredIndex === i ? 6 : 4}
+                                    className={`transition-all duration-300 shadow-sm ${p.data.is_payday ? 'fill-white stroke-yellow-500' :
+                                        p.data.is_holiday ? 'fill-white stroke-red-500' :
+                                            'fill-white stroke-slate-800'
                                         }`}
-                                    strokeWidth="2.5"
+                                    strokeWidth="2"
                                 />
                             </g>
                         ))}
@@ -150,43 +151,46 @@ export function ForecastChart({ predictions, height = 300 }: ForecastChartProps)
                     {/* Tooltip Overlay */}
                     {hoveredIndex !== null && points[hoveredIndex] && (
                         <div
-                            className="absolute z-10 p-4 bg-white border border-border text-ink-900 rounded-xl shadow-2xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-4 text-sm transition-all duration-200 ring-4 ring-black/5"
+                            className="absolute z-10 p-3 bg-white border border-slate-800 text-slate-900 rounded-none shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-3 text-sm transition-all duration-100"
                             style={{
                                 left: `${(hoveredIndex * (100 / Math.max(1, points.length - 1)))}%`,
                                 top: `${100 - (points[hoveredIndex].data.predicted_visits / maxVal) * 100}%`
                             }}
                         >
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="font-black text-ink-900 uppercase text-[10px] tracking-widest bg-surface-100 px-2 py-0.5 rounded">
-                                    {new Date(points[hoveredIndex].data.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' })}
-                                </span>
-                                {points[hoveredIndex].data.is_payday && <span className="text-[10px] font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded uppercase">Payday</span>}
-                            </div>
-                            <div className="text-2xl font-black text-ink-900 leading-none mb-1">
-                                {formatIndianNumber(Math.round(points[hoveredIndex].data.predicted_visits))}
-                            </div>
-                            <div className="text-[11px] font-medium text-ink-500 uppercase tracking-wide">
-                                Expected Traffic
-                            </div>
-                            <div className="mt-3 pt-3 border-t border-border space-y-1">
-                                <div className="flex justify-between text-[10px] text-ink-400 font-bold uppercase">
-                                    <span>Lower Bound</span>
-                                    <span className="text-ink-700">{Math.round(points[hoveredIndex].data.lower_bound)}</span>
+                            <div className="flex flex-col gap-1 min-w-[140px]">
+                                <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
+                                    <span className="font-mono text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                                        {new Date(points[hoveredIndex].data.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' })}
+                                    </span>
+                                    {points[hoveredIndex].data.is_payday && <span className="text-[9px] font-bold text-yellow-700 bg-yellow-50 border border-yellow-200 px-1 py-0.5 rounded-none uppercase">Payday</span>}
                                 </div>
-                                <div className="flex justify-between text-[10px] text-ink-400 font-bold uppercase">
-                                    <span>Upper Bound</span>
-                                    <span className="text-ink-700">{Math.round(points[hoveredIndex].data.upper_bound)}</span>
+                                <div className="flex items-baseline justify-between">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Forecast</span>
+                                    <span className="text-xl font-black text-slate-900 leading-none">
+                                        {formatIndianNumber(Math.round(points[hoveredIndex].data.predicted_visits))}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-1 mt-2">
+                                    <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-500">
+                                        <span>Upper Limit</span>
+                                        <span className="text-slate-800 font-mono">{Math.round(points[hoveredIndex].data.upper_bound)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[10px] uppercase font-bold text-slate-500">
+                                        <span>Lower Limit</span>
+                                        <span className="text-slate-800 font-mono">{Math.round(points[hoveredIndex].data.lower_bound)}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <div className="flex justify-between mt-6 pt-4 border-t border-border/50 text-[10px] font-black text-ink-400 uppercase tracking-widest px-2">
+                <div className="flex justify-between mt-6 pt-3 border-t border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">
                     {points.map((p, i) => (
                         <div key={i} className={`flex flex-col items-center gap-1 ${i % (points.length > 10 ? 2 : 1) === 0 ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}>
-                            <div className={`w-1 h-1 rounded-full ${p.data.is_weekend ? 'bg-accent-500' : 'bg-border'}`}></div>
-                            {new Date(p.data.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                            <div className={`w-1 h-3 rounded-none ${p.data.is_weekend ? 'bg-slate-400' : 'bg-slate-200'}`}></div>
+                            {new Date(p.data.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                         </div>
                     ))}
                 </div>

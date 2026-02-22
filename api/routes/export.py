@@ -12,7 +12,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
-REPORTS_ROOT = Path(__file__).resolve().parents[3] / "reports" / "exports"
+REPORTS_ROOT = Path(__file__).resolve().parents[2] / "reports" / "exports"
 
 router = APIRouter(prefix="/export", tags=["export"])
 
@@ -215,18 +215,10 @@ def _generate_plan_pdf(request: ExportPlanRequest, output_path: Path) -> None:
         )
         story.append(Paragraph(f"P10-P90 bands average {mean_width:.1f} visits wide for planning confidence", body_style))
         story.append(Spacer(1, 16))
-    else:
-        story.append(Paragraph("📊 Visit Forecast", heading_style))
-        story.append(Paragraph(
-            f"{request.p50_forecast:,.0f} total expected visits over {request.date_range}",
-            highlight_style
-        ))
-        story.append(Paragraph(request.p10_p90_note, body_style))
-        story.append(Spacer(1, 16))
 
         # Daily forecast table (first 7 days for readability)
         forecast_table_data = [["Date", "P10", "P50", "P90", "Confidence"]]
-        for point in forecast_points[:7]:  # First week
+        for point in forecast_points[:7]:
             width = point.p90 - point.p10
             confidence = "High" if width < 20 else "Medium" if width < 40 else "Low"
             forecast_table_data.append([
@@ -237,7 +229,10 @@ def _generate_plan_pdf(request: ExportPlanRequest, output_path: Path) -> None:
                 point.confidence or confidence
             ])
 
-        forecast_table = Table(forecast_table_data, colWidths=[1.2*inch, 0.8*inch, 0.8*inch, 0.8*inch, 1*inch])
+        forecast_table = Table(
+            forecast_table_data,
+            colWidths=[1.2 * inch, 0.8 * inch, 0.8 * inch, 0.8 * inch, 1 * inch]
+        )
         forecast_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F2F2F7')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1D1D1F')),
@@ -253,6 +248,14 @@ def _generate_plan_pdf(request: ExportPlanRequest, output_path: Path) -> None:
         ]))
 
         story.append(forecast_table)
+        story.append(Spacer(1, 16))
+    else:
+        story.append(Paragraph("📊 Visit Forecast", heading_style))
+        story.append(Paragraph(
+            f"{request.p50_forecast:,.0f} total expected visits over {request.date_range}",
+            highlight_style
+        ))
+        story.append(Paragraph(request.p10_p90_note, body_style))
         story.append(Spacer(1, 16))
 
     # Staffing section

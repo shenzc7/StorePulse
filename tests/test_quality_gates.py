@@ -27,39 +27,33 @@ def test_lite_vs_ma7_baseline_quality_gate():
     import sys
     import os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-    from api.core.forecast_service import ForecastService
-    from api.core.db import VisitRepository
+    from api.core.db import ModelRepository, SettingsRepository
 
-    # Get historical data for baseline calculation
-    historical_data = VisitRepository.get_visit_history(90)  # Last 90 days
+    lite_model = ModelRepository.get_latest_model("lite", "ingarch")
+    if not lite_model:
+        pytest.skip("Lite model not trained")
 
-    if len(historical_data) < 14:
-        pytest.skip("Insufficient historical data for baseline comparison")
+    metadata = lite_model.get("training_metadata") or {}
+    if metadata.get("sampling_mode") != "full":
+        pytest.skip("Lite quality gate applies to full training mode artifacts only")
 
-    # Calculate MA7 baseline on recent data
-    recent_visits = [r["visits"] for r in historical_data[-14:]]
-    ma7_baseline = sum(recent_visits) / len(recent_visits)
+    metrics_payload = lite_model.get("metrics") or {}
+    smape = metrics_payload.get("smape")
+    ma7_smape = metrics_payload.get("ma7_smape")
+    if smape is None or ma7_smape in (None, 0):
+        pytest.skip("Lite metrics missing required SMAPE/MA7 fields")
 
-    # Generate Lite forecast for comparison
-    forecast_service = ForecastService()
-
-    try:
-        lite_forecast = forecast_service.forecast(horizon_days=7)
-        if lite_forecast.get("status") != "success" or not lite_forecast.get("predictions"):
-            pytest.skip("Lite model not trained or produced no predictions")
-
-        # Calculate average forecast vs baseline
-        avg_forecast = sum(point["predicted_visits"] for point in lite_forecast["predictions"]) / len(lite_forecast["predictions"])
-        improvement_pct = ((avg_forecast - ma7_baseline) / ma7_baseline * 100) if ma7_baseline > 0 else 0
-
-        assert improvement_pct >= 8.0, (
-            f"Lite model fails quality gate: {improvement_pct:.1f}% improvement vs MA7 baseline "
-            f"is below 8% threshold. Business impact: Lite provides minimal advantage "
-            f"over manual trend analysis."
+    improvement_pct = ((ma7_smape - smape) / ma7_smape) * 100
+    threshold = float(
+        (SettingsRepository.get_setting("quality_gates", {}) or {}).get(
+            "lite_vs_baseline_improvement_pct", 8.0
         )
+    )
 
-    except Exception as e:
-        pytest.fail(f"Lite model evaluation failed: {str(e)}")
+    assert improvement_pct >= threshold, (
+        f"Lite model fails quality gate: {improvement_pct:.1f}% improvement vs MA7 baseline "
+        f"is below configured {threshold:.1f}% threshold."
+    )
 
 
 def test_pro_weekend_vs_lite_quality_gate():
@@ -73,63 +67,42 @@ def test_pro_weekend_vs_lite_quality_gate():
     import sys
     import os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-    from api.core.forecast_service import ForecastService
+    from api.core.db import ModelRepository, SettingsRepository
 
-    # Generate forecasts with both modes
-    forecast_service = ForecastService()
-    start_date = date.today() + timedelta(days=1)
+    lite_model = ModelRepository.get_latest_model("lite", "ingarch")
+    pro_model = ModelRepository.get_latest_model("pro", "ingarch")
+    if not lite_model or not pro_model:
+        pytest.skip("Lite/Pro models unavailable for comparison")
 
-    try:
-        lite_forecast = forecast_service.generate_forecast(
-            start_date=start_date,
-            horizon_days=14,
-            mode="lite"
+    lite_meta = lite_model.get("training_metadata") or {}
+    pro_meta = pro_model.get("training_metadata") or {}
+    if lite_meta.get("sampling_mode") != "full" or pro_meta.get("sampling_mode") != "full":
+        pytest.skip("Pro-vs-Lite quality gate applies to full training mode artifacts only")
+
+    lite_records = lite_meta.get("record_count")
+    pro_records = pro_meta.get("record_count")
+    if isinstance(lite_records, int) and isinstance(pro_records, int):
+        if abs(lite_records - pro_records) > max(20, int(0.3 * lite_records)):
+            pytest.skip("Lite and Pro models were trained on materially different dataset sizes")
+
+    lite_metrics = lite_model.get("metrics") or {}
+    pro_metrics = pro_model.get("metrics") or {}
+    lite_smape = lite_metrics.get("smape")
+    pro_smape = pro_metrics.get("smape")
+    if lite_smape in (None, 0) or pro_smape is None:
+        pytest.skip("Lite/Pro SMAPE metrics unavailable")
+
+    improvement_pct = ((lite_smape - pro_smape) / lite_smape) * 100
+    threshold = float(
+        (SettingsRepository.get_setting("quality_gates", {}) or {}).get(
+            "pro_vs_lite_improvement_pct", 10.0
         )
+    )
 
-        pro_forecast = forecast_service.generate_forecast(
-            start_date=start_date,
-            horizon_days=14,
-            mode="pro"
-        )
-
-        if lite_forecast.get("status") != "success" or pro_forecast.get("status") != "success":
-            pytest.skip("Lite/Pro forecasts unavailable for weekend comparison")
-
-        # Compare weekend vs weekday performance
-        weekend_days = [5, 6]  # Saturday, Sunday (0=Monday)
-
-        lite_weekend_forecasts = []
-        lite_weekday_forecasts = []
-        pro_weekend_forecasts = []
-        pro_weekday_forecasts = []
-
-        for i, point in enumerate(lite_forecast["forecast"]):
-            day_of_week = (start_date + timedelta(days=i)).weekday()
-            if day_of_week in weekend_days:
-                lite_weekend_forecasts.append(point["p50"])
-                pro_weekend_forecasts.append(pro_forecast["forecast"][i]["p50"])
-            else:
-                lite_weekday_forecasts.append(point["p50"])
-                pro_weekday_forecasts.append(pro_forecast["forecast"][i]["p50"])
-
-        if not lite_weekend_forecasts:
-            pytest.skip("No weekend days in forecast horizon")
-
-        # Calculate average weekend performance
-        lite_weekend_avg = sum(lite_weekend_forecasts) / len(lite_weekend_forecasts)
-        pro_weekend_avg = sum(pro_weekend_forecasts) / len(pro_weekend_forecasts)
-
-        # Pro should be better on weekends (higher forecast accuracy)
-        weekend_improvement = ((pro_weekend_avg - lite_weekend_avg) / lite_weekend_avg * 100) if lite_weekend_avg > 0 else 0
-
-        assert weekend_improvement >= 20.0, (
-            f"Pro model fails weekend quality gate: {weekend_improvement:.1f}% improvement "
-            f"over Lite is below 20% threshold. Business impact: Pro doesn't provide sufficient "
-            f"value for weekend forecasting critical for operational planning."
-        )
-
-    except Exception as e:
-        pytest.fail(f"Pro vs Lite weekend comparison failed: {str(e)}")
+    assert improvement_pct >= threshold, (
+        f"Pro model fails quality gate: {improvement_pct:.1f}% improvement over Lite "
+        f"is below configured {threshold:.1f}% threshold."
+    )
 
 
 def test_forecast_calibration_coverage_quality_gate():

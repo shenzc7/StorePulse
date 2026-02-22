@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { formatIndianNumber } from '../../src/lib/api';
+import { formatIndianNumber, getApiBaseUrl, apiGet, apiPost, apiUpload, type ApiError } from '../../src/lib/api';
 interface DataInsights {
   total_records: number;
   date_range: string;
@@ -36,7 +36,6 @@ export function DataPage() {
   const [dataInsights, setDataInsights] = useState<DataInsights | null>(null);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([]);
-  const [isLoadingRecent, setIsLoadingRecent] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [entryMode, setEntryMode] = useState<'lite' | 'pro'>('lite');
@@ -46,21 +45,19 @@ export function DataPage() {
   const recordsCount = dataInsights?.total_records ?? 0;
   const dataQualityScore = dataInsights?.data_quality_score ?? 0;
   const dateRangeLabel = dataInsights?.date_range || 'No data yet';
-  const topRecommendations = dataInsights?.recommendations?.slice(0, 2) || [];
   const hasRecords = recordsCount > 0;
-  
+
   useEffect(() => {
     loadDataInsights();
     loadRecentEntries();
     loadExportPreview();
   }, []);
-  
+
   const loadDataInsights = async () => {
     setIsLoadingInsights(true);
     try {
-      const response = await fetch('/api/data/insights');
-      if (response.ok) {
-        const insights = await response.json();
+      const insights = await apiGet<DataInsights>('/api/data/insights');
+      if (insights) {
         setDataInsights(insights);
       }
     } catch (error) {
@@ -69,28 +66,23 @@ export function DataPage() {
       setIsLoadingInsights(false);
     }
   };
-  
+
   const loadRecentEntries = async () => {
-    setIsLoadingRecent(true);
     try {
-      const response = await fetch('/api/data/latest?limit=5');
-      if (response.ok) {
-        const data = await response.json();
-        setRecentEntries(data.records || []);
+      const data = await apiGet<{ records: RecentEntry[] }>('/api/data/latest?limit=5');
+      if (data && data.records) {
+        setRecentEntries(data.records);
       }
     } catch (error) {
       console.error('Failed to load recent entries:', error);
-    } finally {
-      setIsLoadingRecent(false);
     }
   };
 
   const loadExportPreview = async () => {
     setIsLoadingPreview(true);
     try {
-      const response = await fetch('/api/data/export/preview');
-      if (response.ok) {
-        const data = await response.json();
+      const data = await apiGet<Partial<ExportPreview>>('/api/data/export/preview');
+      if (data) {
         setExportPreview({
           total_records: data.total_records || 0,
           date_range: data.date_range || { start: null, end: null },
@@ -103,20 +95,20 @@ export function DataPage() {
       setIsLoadingPreview(false);
     }
   };
-  
+
   const showSuccessMessage = (message: string) => {
     setSuccessMessage(message);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
-  
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
     }
   };
-  
+
   const handleFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer?.files?.[0];
@@ -124,38 +116,29 @@ export function DataPage() {
       setSelectedFile(file);
     }
   };
-  
+
   const handleUpload = async () => {
     if (!selectedFile) return;
     setIsUploading(true);
     setUploadProgress(0);
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      const response = await fetch('/api/files/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      if (response.ok) {
-        setUploadProgress(100);
-        setTimeout(() => {
-          setIsUploading(false);
-          setSelectedFile(null);
-          setUploadProgress(0);
-          showSuccessMessage('File uploaded successfully!');
-          loadDataInsights();
-          loadRecentEntries();
-        }, 1000);
-      } else {
-        throw new Error('Upload failed');
-      }
+      await apiUpload('/api/files/upload', selectedFile);
+      setUploadProgress(100);
+      setTimeout(() => {
+        setIsUploading(false);
+        setSelectedFile(null);
+        setUploadProgress(0);
+        showSuccessMessage('File uploaded successfully!');
+        loadDataInsights();
+        loadRecentEntries();
+      }, 1000);
     } catch (error) {
       console.error('Upload error:', error);
       setIsUploading(false);
       setUploadProgress(0);
     }
   };
-  
+
   const handleQuickEntry = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -183,40 +166,18 @@ export function DataPage() {
       event_date: dateValue,
       visits: visitsNum,
     };
-    
+
     try {
-      const response = await fetch('/api/data/add_today', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (response.ok) {
-        e.currentTarget.reset();
-        showSuccessMessage(`Successfully added ${data.visits} visitors for ${data.event_date}`);
-        loadDataInsights();
-        loadRecentEntries();
-        loadExportPreview();
-      } else {
-        const error = await response.text();
-        try {
-          const errorData = JSON.parse(error);
-          if (errorData.detail && Array.isArray(errorData.detail)) {
-            const firstError = errorData.detail[0];
-            if (firstError.loc && firstError.msg) {
-              alert(`Invalid ${firstError.loc.join(' → ')}: ${firstError.msg}`);
-            } else {
-              alert(`Error: ${errorData.detail || 'Unknown validation error'}`);
-            }
-          } else {
-            alert(`Error: ${errorData.detail || 'Unknown error occurred'}`);
-          }
-        } catch {
-          alert(`Error: ${error}`);
-        }
-      }
+      await apiPost('/api/data/add_today', data);
+      e.currentTarget.reset();
+      showSuccessMessage(`Successfully added ${data.visits} visitors for ${data.event_date}`);
+      loadDataInsights();
+      loadRecentEntries();
+      loadExportPreview();
     } catch (error) {
-      console.error('Submission error:', error);
-      alert('Failed to submit data. Please ensure the backend is running.');
+      const apiError = error as ApiError;
+      console.error('Submission error:', apiError);
+      alert(`Error submitting data: ${apiError.message || 'Unknown error. Ensure backend is running.'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -264,29 +225,21 @@ export function DataPage() {
     };
 
     try {
-      const response = await fetch('/api/data/add_today_pro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        e.currentTarget.reset();
-        showSuccessMessage(`Successfully added Pro data for ${payload.event_date}`);
-        loadDataInsights();
-        loadRecentEntries();
-        loadExportPreview();
-      } else {
-        const error = await response.json().catch(() => ({ detail: 'Unknown error occurred' }));
-        alert(`Pro data submission failed: ${error.detail || 'Unknown error occurred'}`);
-      }
+      await apiPost('/api/data/add_today_pro', payload);
+      e.currentTarget.reset();
+      showSuccessMessage(`Successfully added Pro data for ${payload.event_date}`);
+      loadDataInsights();
+      loadRecentEntries();
+      loadExportPreview();
     } catch (error) {
-      console.error('Pro submission error:', error);
-      alert('Failed to submit Pro data. Please ensure the backend is running.');
+      const apiError = error as ApiError;
+      console.error('Pro submission error:', apiError);
+      alert(`Failed to submit Pro data: ${apiError.message || 'Ensure backend is running.'}`);
     } finally {
       setIsProSubmitting(false);
     }
   };
-  
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -296,7 +249,7 @@ export function DataPage() {
           Monitor data quality, add entries, and upload historical data for accurate forecasting
         </p>
       </header>
-      
+
       {/* Success Message */}
       {showSuccess && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -308,9 +261,9 @@ export function DataPage() {
           </div>
         </div>
       )}
-      
+
       {/* Connected overview */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 gap-4">
         <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -343,56 +296,6 @@ export function DataPage() {
           </div>
         </div>
 
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Pipeline</p>
-            <span className="badge badge-primary">Live</span>
-          </div>
-          <div className="space-y-3">
-            {[
-              { label: 'Store Data', status: hasRecords ? 'Ready for model training' : 'Add data to continue', href: '/data' },
-              { label: 'Train Models', status: 'Uses this dataset', href: '/train' },
-              { label: 'Forecast', status: 'Refresh after training', href: '/forecast' },
-              { label: 'Reports', status: 'Compare forecast vs actuals', href: '/reports' },
-            ].map((step) => (
-              <a
-                key={step.label}
-                href={step.href}
-                className="flex items-center justify-between p-3 rounded-xl bg-surface-100 hover:bg-surface-200 transition-colors"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-ink-900">{step.label}</p>
-                  <p className="text-xs text-ink-600">{step.status}</p>
-                </div>
-                <svg className="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Recommendations snapshot</p>
-            <span className="badge badge-neutral">Live</span>
-          </div>
-          <div className="space-y-2">
-            {topRecommendations.length > 0 ? (
-              topRecommendations.map((rec, index) => (
-                <div key={index} className="p-3 rounded-lg border border-border bg-surface-50 text-sm text-ink-800">
-                  {rec}
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-ink-600">We will surface recommendations once data is uploaded.</p>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2 mt-4">
-            <a href="#recommendations" className="btn-secondary text-xs">View all</a>
-            <a href="#quick-entry" className="btn-primary text-xs">Add data</a>
-          </div>
-        </div>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -400,12 +303,8 @@ export function DataPage() {
           <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Data signals</p>
           <h2 className="text-lg font-semibold text-ink-900">Live metrics from your dataset</h2>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <a href="#quick-entry" className="btn-secondary text-xs">Quick entry</a>
-          <a href="#bulk-import" className="btn-secondary text-xs">Bulk import</a>
-        </div>
       </div>
-      
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card p-5 border border-border">
@@ -464,71 +363,8 @@ export function DataPage() {
           </p>
         </div>
       </div>
-      
-      {/* Recommendations and Gaps */}
-      {dataInsights && (dataInsights.recommendations.length > 0 || dataInsights.gaps.length > 0) && (
-        <section id="recommendations" className="card p-6 border border-border">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div>
-              <p className="text-xs font-semibold text-ink-700 uppercase tracking-wide">Recommendations</p>
-              <h3 className="text-lg font-semibold text-ink-900">Make the data useful across the app</h3>
-              <p className="text-sm text-ink-600">Apply these before retraining or reading forecasts.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <a href="/train" className="btn-secondary text-xs">Open Train</a>
-              <a href="/forecast" className="btn-primary text-xs">See Forecast</a>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {dataInsights.recommendations.length > 0 && (
-              <div className="p-5 rounded-xl border border-border bg-surface-50">
-                <h4 className="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Actionable recommendations
-                </h4>
-                <div className="space-y-2">
-                  {dataInsights.recommendations.map((rec, index) => (
-                    <div key={index} className="flex items-start gap-2 text-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-accent-500 mt-2 flex-shrink-0"></div>
-                      <span className="text-ink-700">{rec}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <a href="#quick-entry" className="btn-secondary text-xs">Add missing days</a>
-                  <a href="#bulk-import" className="btn-secondary text-xs">Upload history</a>
-                </div>
-              </div>
-            )}
-            
-            {dataInsights.gaps.length > 0 && (
-              <div className="p-5 rounded-xl border border-border bg-surface-50">
-                <h4 className="text-sm font-bold text-ink-900 mb-3 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  Areas for improvement
-                </h4>
-                <div className="space-y-2">
-                  {dataInsights.gaps.map((gap, index) => (
-                    <div key={index} className="flex items-start gap-2 text-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-warning-500 mt-2 flex-shrink-0"></div>
-                      <span className="text-ink-700">{gap}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <a href="/train" className="btn-secondary text-xs">Retrain after fixes</a>
-                  <a href="/reports" className="btn-secondary text-xs">Monitor variance</a>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-      
+
+
       {/* Recent Data Preview */}
       {recentEntries.length > 0 && (
         <div className="card p-6">
@@ -561,7 +397,7 @@ export function DataPage() {
           </div>
         </div>
       )}
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Entry Card */}
         <section id="quick-entry" className="card p-6">
@@ -807,7 +643,7 @@ export function DataPage() {
             </form>
           )}
         </section>
-        
+
         {/* File Upload Card */}
         <section id="bulk-import" className="card p-6">
           <div className="mb-6">
@@ -851,7 +687,7 @@ export function DataPage() {
                 </div>
               </label>
             </div>
-            
+
             {isUploading && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
@@ -866,7 +702,7 @@ export function DataPage() {
                 </div>
               </div>
             )}
-            
+
             {selectedFile && !isUploading && (
               <button
                 onClick={handleUpload}
@@ -878,7 +714,7 @@ export function DataPage() {
                 <span>Upload File</span>
               </button>
             )}
-            
+
             <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
               <div className="flex items-start gap-2">
                 <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -892,7 +728,7 @@ export function DataPage() {
           </div>
         </section>
       </div>
-      
+
       {/* Export Preview */}
       <section className="card p-6">
         <div className="flex items-center justify-between mb-4">
@@ -959,7 +795,11 @@ export function DataPage() {
                   key={format}
                   type="button"
                   className="btn-secondary text-sm"
-                  onClick={() => window.open(`/api/data/export?format=${format}`, '_blank')}
+                  onClick={() => {
+                    const baseUrl = getApiBaseUrl();
+                    const url = baseUrl ? `${baseUrl}/api/data/export?format=${format}` : `/api/data/export?format=${format}`;
+                    window.open(url, '_blank');
+                  }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -973,7 +813,7 @@ export function DataPage() {
           <p className="text-sm text-ink-600">No data available to export yet.</p>
         )}
       </section>
-      
+
       {/* Data Guidelines */}
       <section className="card p-6">
         <h2 className="text-sm font-bold text-ink-900 mb-4 flex items-center gap-2">
@@ -1020,7 +860,7 @@ export function DataPage() {
             <p className="text-sm text-ink-700">All data stored locally - never transmitted online</p>
           </div>
         </div>
-        
+
         <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
           <div className="flex items-start gap-2">
             <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

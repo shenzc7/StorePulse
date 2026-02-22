@@ -1,22 +1,215 @@
 """Model performance metrics endpoints."""
 
+from __future__ import annotations
+
+import time
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import joblib
+import numpy as np
+import pandas as pd
 from fastapi import APIRouter
 
+from ..core import feats
 from ..core.db import ModelRepository, VisitRepository
+from ..core.forecast_service import ForecastService
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 
+class _FrameLoader:
+    """Adapter that lets feature builder consume an in-memory DataFrame."""
+
+    def __init__(self, frame: pd.DataFrame) -> None:
+        self._frame = frame
+
+    def load(self) -> pd.DataFrame:
+        return self._frame.copy()
+
+
+def _safe_float(value: Any) -> Optional[float]:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(numeric):
+        return None
+    return numeric
+
+
+def _load_model_artifact(model_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    artifact_path = model_info.get("artifact_path")
+    if not artifact_path:
+        return None
+
+    path = Path(str(artifact_path))
+    if not path.exists():
+        return None
+
+    try:
+        payload = joblib.load(path)
+    except Exception:
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    if "model" not in payload:
+        return None
+
+    return payload
+
+
+def _compute_lite_lift(lite_metrics: Dict[str, Any]) -> float:
+    smape = _safe_float(lite_metrics.get("smape"))
+    ma7_smape = _safe_float(lite_metrics.get("ma7_smape"))
+    if smape is None or ma7_smape is None or ma7_smape <= 0:
+        return 0.0
+    return round(((ma7_smape - smape) / ma7_smape) * 100.0, 1)
+
+
+def _compute_pro_gain(lite_metrics: Dict[str, Any], pro_metrics: Dict[str, Any]) -> float:
+    lite_smape = _safe_float(lite_metrics.get("smape"))
+    pro_smape = _safe_float(pro_metrics.get("smape"))
+    if lite_smape is None or pro_smape is None or lite_smape <= 0:
+        return 0.0
+    return round(((lite_smape - pro_smape) / lite_smape) * 100.0, 1)
+
+
+def _model_predict(model: Any, design_matrix: pd.DataFrame) -> np.ndarray:
+    if hasattr(model, "predict") and hasattr(model, "coef_"):
+        return np.asarray(model.predict(design_matrix), dtype=float)
+    if hasattr(model, "predict"):
+        matrix = design_matrix.to_numpy(dtype=float, copy=True)
+        return np.asarray(model.predict(exog=matrix), dtype=float)
+    raise RuntimeError("Model artifact does not expose a supported predict API")
+
+
+def _compute_empirical_coverage(
+    model_info: Dict[str, Any],
+    history: list[dict[str, Any]],
+) -> Optional[float]:
+    if len(history) < 45:
+        return None
+
+    artifact = _load_model_artifact(model_info)
+    if not artifact:
+        return None
+
+    model = artifact.get("model")
+    feature_cols = artifact.get("feature_cols") or []
+    if model is None or not feature_cols:
+        return None
+
+    raw = pd.DataFrame(history)
+    if raw.empty or "event_date" not in raw.columns or "visits" not in raw.columns:
+        return None
+
+    try:
+        feature_frame = feats.build_features(_FrameLoader(raw))
+    except Exception:
+        return None
+
+    if feature_frame.empty:
+        return None
+
+    missing = [col for col in feature_cols if col not in feature_frame.columns]
+    for col in missing:
+        feature_frame[col] = 0.0
+
+    design = feature_frame.loc[:, feature_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
+    actual = pd.to_numeric(feature_frame["visits"], errors="coerce").to_numpy(dtype=float)
+    if actual.size == 0:
+        return None
+
+    try:
+        preds = _model_predict(model, design)
+    except Exception:
+        return None
+
+    n = min(len(actual), len(preds))
+    if n <= 0:
+        return None
+
+    actual = actual[-n:]
+    preds = preds[-n:]
+
+    rolling_std = (
+        pd.to_numeric(feature_frame.get("rolling_std_7"), errors="coerce")
+        .fillna(0.0)
+        .to_numpy(dtype=float)
+        if "rolling_std_7" in feature_frame.columns
+        else np.zeros(n, dtype=float)
+    )
+    rolling_std = rolling_std[-n:]
+
+    residual_std = np.std(actual - preds)
+    floor_std = max(residual_std, 1.0)
+    sigma = np.where(rolling_std > 0, rolling_std, floor_std)
+
+    lower = preds - (1.645 * sigma)
+    upper = preds + (1.645 * sigma)
+    covered = (actual >= lower) & (actual <= upper)
+    return round(float(np.mean(covered) * 100.0), 1)
+
+
+def _measure_forecast_latency(mode: str) -> str:
+    service = ForecastService()
+    start = time.perf_counter()
+    result = service.forecast(horizon_days=1, mode=mode)
+    elapsed = time.perf_counter() - start
+    if result.get("status") == "success":
+        return f"{elapsed:.2f}s"
+    return "Unavailable"
+
+
+def calculate_model_metrics() -> dict:
+    """Calculate metrics from real trained artifacts and persisted data."""
+    lite_model = ModelRepository.get_latest_model("lite", "ingarch")
+    pro_model = ModelRepository.get_latest_model("pro", "ingarch")
+
+    if not lite_model and not pro_model:
+        return {
+            "lite_lift": 0.0,
+            "pro_weekend_gain": 0.0,
+            "coverage": 0.0,
+            "time_to_first_forecast": "No models trained",
+        }
+
+    lite_metrics = (lite_model or {}).get("metrics") or {}
+    pro_metrics = (pro_model or {}).get("metrics") or {}
+
+    lite_lift = _compute_lite_lift(lite_metrics)
+    pro_gain = _compute_pro_gain(lite_metrics, pro_metrics) if lite_model and pro_model else 0.0
+
+    history = VisitRepository.get_visit_history(365)
+    coverage_candidates: list[float] = []
+    if lite_model:
+        lite_coverage = _compute_empirical_coverage(lite_model, history)
+        if lite_coverage is not None:
+            coverage_candidates.append(lite_coverage)
+    if pro_model:
+        pro_coverage = _compute_empirical_coverage(pro_model, history)
+        if pro_coverage is not None:
+            coverage_candidates.append(pro_coverage)
+
+    coverage = round(float(np.mean(coverage_candidates)), 1) if coverage_candidates else 0.0
+
+    preferred_mode = "lite" if lite_model else "pro"
+    latency = _measure_forecast_latency(preferred_mode)
+
+    return {
+        "lite_lift": lite_lift,
+        "pro_weekend_gain": pro_gain,
+        "coverage": coverage,
+        "time_to_first_forecast": latency,
+    }
+
+
 @router.get("/")
 async def get_model_metrics() -> dict:
-    """Return current model performance metrics for the AccuracyMeter component.
-
-    This endpoint provides the metrics needed by the frontend AccuracyMeter:
-    - lite_lift: How much better lite model is than simple averages
-    - pro_weekend_gain: Extra accuracy boost for weekend predictions
-    - coverage: Percentage of actual values within prediction bands
-    - time_to_first_forecast: How quickly we can make predictions
-    """
+    """Return current model performance metrics for dashboard components."""
     try:
         metrics = calculate_model_metrics()
         lite_model = ModelRepository.get_latest_model("lite", "ingarch")
@@ -30,129 +223,16 @@ async def get_model_metrics() -> dict:
             "model_status": {
                 "lite_model_available": lite_model is not None,
                 "pro_model_available": pro_model is not None,
-            }
+            },
         }
-
     except Exception:
-        # Return default metrics if calculation fails
         return {
             "lite_lift": 0.0,
             "pro_weekend_gain": 0.0,
             "coverage": 0.0,
-            "time_to_first_forecast": "Unknown",
+            "time_to_first_forecast": "Unavailable",
             "model_status": {
                 "lite_model_available": False,
                 "pro_model_available": False,
-            }
-        }
-
-
-def calculate_model_metrics() -> dict:
-    """Calculate REAL model performance metrics from actual trained models and data.
-
-    Uses real backtesting results, model performance on historical data,
-    and actual training metrics to provide accurate dashboard metrics.
-    """
-    lite_model = ModelRepository.get_latest_model("lite", "ingarch")
-    pro_model = ModelRepository.get_latest_model("pro", "ingarch")
-    has_model = lite_model is not None or pro_model is not None
-
-    # Base metrics when no models are trained
-    if not has_model:
-        return {
-            "lite_lift": 0.0,
-            "pro_weekend_gain": 0.0,
-            "coverage": 0.0,
-            "time_to_first_forecast": "No models trained"
-        }
-
-    try:
-        historical_data = VisitRepository.get_visit_history(365)
-
-        if not historical_data or len(historical_data) < 30:
-            # Not enough data for meaningful metrics
-            return {
-                "lite_lift": 0.0,
-                "pro_weekend_gain": 0.0,
-                "coverage": 85.0,  # Default reasonable coverage
-                "time_to_first_forecast": "Insufficient data"
-            }
-
-        # Calculate REAL baseline performance (moving average)
-        import pandas as pd
-        import numpy as np
-
-        df = pd.DataFrame(historical_data)
-        df['event_date'] = pd.to_datetime(df['event_date'])
-        df = df.sort_values('event_date')
-
-        # Calculate 7-day moving average baseline
-        df['ma7_baseline'] = df['visits'].rolling(window=7).mean().shift(1)
-
-        # Calculate real model performance on recent data
-        valid_mask = ~df['ma7_baseline'].isna()
-        if valid_mask.sum() > 0:
-            actual_visits = df.loc[valid_mask, 'visits'].values
-            baseline_preds = df.loc[valid_mask, 'ma7_baseline'].values
-
-            # Calculate real baseline accuracy
-            baseline_errors = np.abs(actual_visits - baseline_preds)
-            safe_actual = np.where(actual_visits > 0, actual_visits, 1)
-            baseline_mape = np.mean(baseline_errors / safe_actual) * 100
-
-            # Estimate model lift based on INGARCH characteristics
-            # INGARCH typically performs 15-35% better than MA7
-            model_mape = max(baseline_mape * 0.65, baseline_mape - 8.0)  # At least 8% absolute improvement
-            lite_lift = ((baseline_mape - model_mape) / baseline_mape) * 100
-        else:
-            lite_lift = 22.0  # Default based on INGARCH literature
-
-        # Calculate weekend-specific performance
-        df['is_weekend'] = df['event_date'].dt.weekday >= 5
-        weekend_data = df[df['is_weekend'] & valid_mask]
-
-        if len(weekend_data) > 5:
-            weekend_baseline_errors = np.abs(weekend_data['visits'] - weekend_data['ma7_baseline'])
-            safe_weekend = np.where(weekend_data['visits'] > 0, weekend_data['visits'], 1)
-            weekend_baseline_mape = np.mean(weekend_baseline_errors / safe_weekend) * 100
-
-            # INGARCH typically performs better on weekends due to volatility clustering
-            weekend_model_mape = max(weekend_baseline_mape * 0.6, weekend_baseline_mape - 12.0)
-            pro_weekend_gain = ((weekend_baseline_mape - weekend_model_mape) / weekend_baseline_mape) * 100
-        else:
-            pro_weekend_gain = 18.0  # Default weekend improvement
-
-        # Calculate real coverage based on data volatility
-        if len(df) > 14:
-            # Use recent volatility to estimate realistic prediction intervals
-            recent_volatility = df['visits'].tail(30).std() / df['visits'].tail(30).mean()
-            # INGARCH provides better calibration than simple methods
-            coverage = min(95.0, 85.0 + (1 - recent_volatility) * 8.0)
-        else:
-            coverage = 87.0  # Default coverage
-
-        # Estimate realistic training time based on data size
-        data_points = len(df)
-        if data_points < 60:
-            time_to_first_forecast = "2-3 minutes"
-        elif data_points < 180:
-            time_to_first_forecast = "4-5 minutes"
-        else:
-            time_to_first_forecast = "6-8 minutes"
-
-        return {
-            "lite_lift": round(lite_lift, 1),
-            "pro_weekend_gain": round(pro_weekend_gain, 1),
-            "coverage": round(coverage, 1),
-            "time_to_first_forecast": time_to_first_forecast
-        }
-
-    except Exception as e:
-        print(f"Warning: Failed to calculate real metrics, using defaults: {e}")
-        # Fallback to reasonable defaults based on INGARCH literature
-        return {
-            "lite_lift": 24.5,
-            "pro_weekend_gain": 15.2,
-            "coverage": 88.5,
-            "time_to_first_forecast": "3.5 minutes"
+            },
         }

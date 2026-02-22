@@ -1,7 +1,12 @@
 {
-  "dataset": "/var/folders/mr/k56xtgss4jb13qczsw_6mbbr0000gn/T/storepulse_train_37m64iwl/pro_sample.csv",
-  "rows": 335,
+  "dataset": "data/demo_pro.csv",
+  "rows": 150,
   "feature_cols": [
+    "sales",
+    "conversion",
+    "paydays",
+    "school_breaks",
+    "open_hours",
     "lag_1",
     "lag_2",
     "lag_7",
@@ -11,6 +16,18 @@
     "dow",
     "is_weekend",
     "is_holiday",
+    "weather_humid",
+    "weather_rainy",
+    "weather_storm",
+    "weather_sunny",
+    "promo_type_bundle",
+    "promo_type_flash",
+    "promo_type_none",
+    "promo_type_percent_off",
+    "local_events_Independence Day",
+    "local_events_Labor Day",
+    "local_events_Memorial Day",
+    "local_events_missing",
     "rolling_mean_7",
     "rolling_std_7",
     "rolling_mean_14",
@@ -25,21 +42,21 @@
     "quarter"
   ],
   "model_spec": {
-    "p": 2,
+    "p": 1,
     "q": 1,
     "type": "INGARCH"
   },
   "training_metrics": {
-    "smape": 21.051300365346012,
-    "mase": 0.026606662899121895,
-    "rmse": 34.14841962076047,
-    "ma7_smape": 20.840760244695034,
-    "naive_smape": 19.367432274506175
+    "smape": 36.510800732476746,
+    "mase": 0.017898055143697963,
+    "rmse": 78.11559565378447,
+    "ma7_smape": 39.222030507889,
+    "naive_smape": 48.976572837994155
   },
   "quality_gate": {
     "applies": false,
     "threshold_pct": 0.0,
-    "lift_pct": -1.0102324395990852,
+    "lift_pct": 6.9125176343609445,
     "passed": true
   },
   "backtest": {

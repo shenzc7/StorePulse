@@ -53,6 +53,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .schemas import LiteRecord, ProRecord
+import pandas as pd
+import numpy as np
+import math
 
 # Database configuration and paths
 # The database file is stored in the data directory relative to the project root
@@ -536,6 +539,98 @@ class VisitRepository:
                 "min_date": _parse_date(row["min_date"]),
                 "max_date": _parse_date(row["max_date"]),
             }
+
+    @staticmethod
+    def import_dataframe(df: pd.DataFrame, mode: str = "lite") -> Dict[str, Any]:
+        """Bulk import a dataframe of visit records into the database."""
+        # explain like I'm 12: this takes a big table of diary entries and saves them all at once
+        # into our database so we don't have to type them in one by one.
+
+        def _to_optional_float(value: Any) -> float | None:
+            if value is None or (isinstance(value, float) and math.isnan(value)):
+                return None
+            if isinstance(value, str) and value.strip() == "":
+                return None
+            try:
+                numeric = float(value)
+                return None if math.isnan(numeric) or math.isinf(numeric) else numeric
+            except (TypeError, ValueError):
+                return None
+
+        def _to_optional_bool(value: Any) -> bool | None:
+            if isinstance(value, bool):
+                return value
+            if value is None or (isinstance(value, float) and math.isnan(value)):
+                return None
+            lowered = str(value).strip().lower()
+            if lowered in {"1", "true", "yes", "y", "on"}:
+                return True
+            if lowered in {"0", "false", "no", "n", "off"}:
+                return False
+            return None
+
+        working = df.copy()
+        
+        # Normalize columns
+        if "date" in working.columns and "event_date" not in working.columns:
+            working = working.rename(columns={"date": "event_date"})
+        
+        if "event_date" not in working.columns or "visits" not in working.columns:
+            return {"status": "error", "message": "Missing required columns: event_date, visits"}
+
+        working["event_date"] = pd.to_datetime(working["event_date"], errors="coerce")
+        working["visits"] = pd.to_numeric(working["visits"], errors="coerce").fillna(0).astype(int)
+        working = working.dropna(subset=["event_date"])
+
+        # Shift dates if they are too old (optional, but good for UX)
+        upload_dates = working["event_date"]
+        if not upload_dates.empty:
+            max_date = upload_dates.max()
+            today = pd.Timestamp(datetime.now().date())
+            if max_date < today - timedelta(days=30):
+                shift = today - max_date
+                working["event_date"] = upload_dates + shift
+
+        count = 0
+        errors = []
+
+        for _, row in working.iterrows():
+            try:
+                event_day = row["event_date"].date()
+                visits = int(row["visits"])
+                
+                if mode == "pro":
+                    record = ProRecord(
+                        event_date=event_day,
+                        visits=visits,
+                        sales=_to_optional_float(row.get("sales")),
+                        conversion=_to_optional_float(row.get("conversion")),
+                        promo_type=str(row.get("promo_type")) if row.get("promo_type") else None,
+                        price_change=_to_optional_float(row.get("price_change")),
+                        weather=str(row.get("weather")) if row.get("weather") else None,
+                        paydays=_to_optional_bool(row.get("paydays")),
+                        school_breaks=_to_optional_bool(row.get("school_breaks")),
+                        local_events=str(row.get("local_events")) if row.get("local_events") else None,
+                        open_hours=_to_optional_float(row.get("open_hours"))
+                    )
+                    success = VisitRepository.add_pro_record(record)
+                else:
+                    record = LiteRecord(event_date=event_day, visits=visits)
+                    success = VisitRepository.add_lite_record(record)
+                
+                if success:
+                    count += 1
+                else:
+                    errors.append(f"Failed to save record for {event_day}")
+            except Exception as e:
+                errors.append(f"Error processing row: {str(e)}")
+
+        return {
+            "status": "success" if not errors else "partial_success",
+            "imported_count": count,
+            "error_count": len(errors),
+            "errors": errors[:10]  # Return first 10 errors
+        }
 
 
 class ModelRepository:
