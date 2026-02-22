@@ -26,6 +26,18 @@ def test_health_check():
     data = response.json()
     assert data["status"] == "ok"
 
+
+def test_train_latest_signature_endpoint():
+    """Test model signature endpoint for training recovery checks."""
+    response = client.get("/api/train/latest?mode=lite")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["mode"] == "lite"
+    assert "available" in payload
+    assert "model_id" in payload
+    assert "trained_at" in payload
+    assert "version" in payload
+
 def test_train_flow(sample_csv):
     """Test full training flow with CSV upload."""
     # 1. Upload and Train

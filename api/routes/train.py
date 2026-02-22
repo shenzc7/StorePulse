@@ -64,7 +64,7 @@ from typing import Any, AsyncGenerator, Iterable
 # Third-party libraries for data processing and web framework
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi import UploadFile as FastAPIUploadFile
 from starlette.datastructures import UploadFile
 from pydantic import BaseModel, ValidationError
@@ -874,6 +874,32 @@ async def training_progress(request: Request) -> EventSourceResponse:
         yield {"event": "status", "data": '{"status": "ready", "message": "Ready for training"}'}
 
     return EventSourceResponse(event_stream())
+
+
+@router.get("/latest")
+async def latest_trained_model(
+    mode: str = Query(..., pattern="^(lite|pro)$", description="Model mode to inspect"),
+) -> dict[str, Any]:
+    """Return the latest registered INGARCH model signature for a mode."""
+    from api.core.db import ModelRepository
+
+    model = ModelRepository.get_latest_model(mode, "ingarch")
+    if not model:
+        return {
+            "mode": mode,
+            "available": False,
+            "model_id": None,
+            "trained_at": None,
+            "version": None,
+        }
+
+    return {
+        "mode": mode,
+        "available": True,
+        "model_id": model.get("id"),
+        "trained_at": model.get("trained_at"),
+        "version": model.get("version"),
+    }
 
 
 @router.post("/")

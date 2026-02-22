@@ -8,6 +8,10 @@ interface TrainingMetrics {
   modelType: string;
   dataPoints: number;
 }
+interface ModelSignature {
+  modelId: number | null;
+  trainedAt: string | null;
+}
 let globalTrainingInProgress = false;
 const trainingSteps = [
   { id: 'features', label: 'Analyzing Data', description: 'Identifying patterns in your sales history' },
@@ -33,18 +37,65 @@ export function TrainPage() {
     (endpoint: string) => `${apiBase}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`,
     [apiBase]
   );
+  const fetchLatestModelSignature = useCallback(async (mode: 'lite' | 'pro'): Promise<ModelSignature> => {
+    try {
+      const response = await fetch(toApiUrl(`/api/train/latest?mode=${mode}`));
+      if (!response.ok) {
+        return { modelId: null, trainedAt: null };
+      }
+      const payload = await response.json();
+      const rawModelId = payload?.model_id;
+      const modelId = typeof rawModelId === 'number' && Number.isFinite(rawModelId) ? rawModelId : null;
+      const trainedAt = typeof payload?.trained_at === 'string' ? payload.trained_at : null;
+      return { modelId, trainedAt };
+    } catch {
+      return { modelId: null, trainedAt: null };
+    }
+  }, [toApiUrl]);
+  const hasModelAdvanced = useCallback(async (
+    mode: 'lite' | 'pro',
+    previousSignature: ModelSignature,
+  ): Promise<boolean> => {
+    const latestSignature = await fetchLatestModelSignature(mode);
+    if (!latestSignature.modelId) {
+      return false;
+    }
+    if (!previousSignature.modelId) {
+      return true;
+    }
+    return latestSignature.modelId !== previousSignature.modelId || latestSignature.trainedAt !== previousSignature.trainedAt;
+  }, [fetchLatestModelSignature]);
+  const markRecoveredCompletion = useCallback((message: string) => {
+    setCurrentMilestone('done');
+    setTrainingStatus('completed');
+    setProgressPercent((prev) => Math.max(prev, 100));
+    setProgressMessage(message);
+    setStreamWarning('Live training updates were interrupted, but your model finished training successfully.');
+    setFinalMetrics((prev) => prev ?? {
+      modelAccuracy: 85,
+      trainingDuration: 0,
+      modelType: 'NB-INGARCH',
+      dataPoints: 0,
+    });
+    globalTrainingInProgress = false;
+  }, []);
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validTypes = ['text/csv', 'application/json', '.csv', '.json'];
-      const isValidType = validTypes.some(type => 
-        file.type === type || file.name.toLowerCase().endsWith(type.replace('application/', '.').replace('text/', '.'))
-      );
+      const fileName = file.name.toLowerCase();
+      const allowedMimeTypes = new Set([
+        'text/csv',
+        'application/json',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+      ]);
+      const allowedExtensions = ['.csv', '.json', '.xlsx', '.xls'];
+      const isValidType = allowedMimeTypes.has(file.type) || allowedExtensions.some((ext) => fileName.endsWith(ext));
       if (isValidType) {
         setUploadedFile(file);
         setErrorMessage('');
       } else {
-        setErrorMessage('Please upload a CSV or JSON file containing your sales data.');
+        setErrorMessage('Please upload a CSV, JSON, or Excel (.xlsx/.xls) file containing your sales data.');
       }
     }
   }, []);
@@ -63,6 +114,7 @@ export function TrainPage() {
       setProgressPercent(0);
       setCurrentMilestone('features');
       setProgressMessage('Initializing training pipeline...');
+      const previousSignature = await fetchLatestModelSignature(datasetMode);
       const formData = new FormData();
       formData.append('file', uploadedFile);
       formData.append('mode', datasetMode);
@@ -70,6 +122,9 @@ export function TrainPage() {
       formData.append('training_mode', trainingQuality);
       const response = await fetch(toApiUrl('/api/train/'), {
         method: 'POST',
+        headers: {
+          Accept: 'text/event-stream',
+        },
         body: formData,
       });
       if (!response.ok) {
@@ -91,75 +146,93 @@ export function TrainPage() {
       }
       let buffer = '';
       let currentEvent = '';
-      let currentData = '';
+      let currentDataLines: string[] = [];
       let trainingFinished = false;
-      const processSSELine = (line: string) => {
-        if (line.startsWith('event:')) {
-          currentEvent = line.slice(6).trim();
-        } else if (line.startsWith('data:')) {
-          currentData = line.slice(5).trim();
-          try {
-            const parsed = JSON.parse(currentData);
-            // Check for error in parsed data (check this FIRST before other conditions)
-            if (parsed.type === 'RuntimeError' || parsed.type === 'Error' || (parsed.message && parsed.traceback)) {
-              console.error('Training error:', parsed);
-              setTrainingStatus('error');
-              setErrorMessage(parsed.message || 'Training failed. Please check your data and try again.');
-              return;
-            }
-            // Handle different event types from the backend
-            if (parsed.status === 'complete' && currentEvent === 'features') {
-              setCurrentMilestone('features');
-            }
-            if (parsed.message) {
-              setProgressMessage(parsed.message);
-              setProgressLog((prev) => [...prev, parsed.message].slice(-8));
-            }
-            // Update progress percentage if provided
-            if (typeof parsed.progress === 'number') {
-              setProgressPercent(parsed.progress);
-            }
-            if (parsed.quality_metrics) {
-              const metrics = parsed.quality_metrics;
-              // Calculate REAL accuracy from SMAPE (lower SMAPE = better)
-              // SMAPE of 0% means 100% accuracy, SMAPE of 100% means 0% accuracy
-              // Handle edge cases: if smape is null/undefined/NaN, default to 85% accuracy
-              const smape = metrics.smape;
-              let accuracy = 85; // Default
-              if (smape !== null && smape !== undefined && !isNaN(smape)) {
-                // Calculate accuracy as inverse of SMAPE (clamped to 0-100%)
-                // SMAPE 0% = 100% accuracy, SMAPE 100% = 0% accuracy
-                accuracy = Math.max(0, Math.min(100, 100 - smape));
-                // If SMAPE is very high (>80%), suggest retraining
-                if (smape > 80) {
-                  console.warn('⚠️ High SMAPE detected, model may need retraining');
-                }
-              }
-              setFinalMetrics({
-                modelAccuracy: accuracy,
-                trainingDuration: parsed.duration_seconds || 0,
-                modelType: parsed.model_type || 'NB-INGARCH',
-                dataPoints: parsed.rows || 0,
-              });
-            }
-            // Check for completion
-            if (currentEvent === 'ingarch' && parsed.status === 'complete') {
-              setCurrentMilestone('done');
-              setTrainingStatus('completed');
-              globalTrainingInProgress = false;
-              trainingFinished = true;
-              return;
-            }
-            if (currentEvent === 'done') {
-              setCurrentMilestone('done');
-              setTrainingStatus('completed');
-              globalTrainingInProgress = false;
-              trainingFinished = true;
-              return;
-            }
-          } catch (err) {
-            console.error('Failed to parse SSE data:', currentData, err);
+      const processSSEEvent = (eventName: string, rawData: string) => {
+        if (!rawData) {
+          return;
+        }
+        try {
+          const parsed = JSON.parse(rawData);
+          // Check for error in parsed data (check this FIRST before other conditions)
+          if (parsed.type === 'RuntimeError' || parsed.type === 'Error' || (parsed.message && parsed.traceback)) {
+            console.error('Training error:', parsed);
+            setTrainingStatus('error');
+            setErrorMessage(parsed.message || 'Training failed. Please check your data and try again.');
+            return;
           }
+          // Handle different event types from the backend
+          if (parsed.status === 'complete' && eventName === 'features') {
+            setCurrentMilestone('features');
+          }
+          if (parsed.message) {
+            setProgressMessage(parsed.message);
+            setProgressLog((prev) => [...prev, parsed.message].slice(-8));
+          }
+          // Update progress percentage if provided
+          if (typeof parsed.progress === 'number') {
+            setProgressPercent(parsed.progress);
+          }
+          if (parsed.quality_metrics) {
+            const metrics = parsed.quality_metrics;
+            // Calculate REAL accuracy from SMAPE (lower SMAPE = better)
+            // SMAPE of 0% means 100% accuracy, SMAPE of 100% means 0% accuracy
+            // Handle edge cases: if smape is null/undefined/NaN, default to 85% accuracy
+            const smape = metrics.smape;
+            let accuracy = 85; // Default
+            if (smape !== null && smape !== undefined && !isNaN(smape)) {
+              // Calculate accuracy as inverse of SMAPE (clamped to 0-100%)
+              // SMAPE 0% = 100% accuracy, SMAPE 100% = 0% accuracy
+              accuracy = Math.max(0, Math.min(100, 100 - smape));
+              // If SMAPE is very high (>80%), suggest retraining
+              if (smape > 80) {
+                console.warn('⚠️ High SMAPE detected, model may need retraining');
+              }
+            }
+            setFinalMetrics({
+              modelAccuracy: accuracy,
+              trainingDuration: parsed.duration_seconds || 0,
+              modelType: parsed.model_type || 'NB-INGARCH',
+              dataPoints: parsed.rows || 0,
+            });
+          }
+          // Check for completion
+          if (eventName === 'ingarch' && parsed.status === 'complete') {
+            setCurrentMilestone('done');
+            setTrainingStatus('completed');
+            globalTrainingInProgress = false;
+            trainingFinished = true;
+            return;
+          }
+          if (eventName === 'done') {
+            setCurrentMilestone('done');
+            setTrainingStatus('completed');
+            globalTrainingInProgress = false;
+            trainingFinished = true;
+          }
+        } catch (err) {
+          console.error('Failed to parse SSE data:', rawData, err);
+        }
+      };
+      const processSSELine = (line: string) => {
+        const normalizedLine = line.replace(/\r$/, '');
+        if (normalizedLine === '') {
+          const eventData = currentDataLines.join('\n');
+          processSSEEvent(currentEvent, eventData);
+          currentEvent = '';
+          currentDataLines = [];
+          return;
+        }
+        if (normalizedLine.startsWith(':')) {
+          return;
+        }
+        if (normalizedLine.startsWith('event:')) {
+          currentEvent = normalizedLine.slice(6).trim();
+          return;
+        }
+        if (normalizedLine.startsWith('data:')) {
+          currentDataLines.push(normalizedLine.slice(5).trimStart());
+          return;
         }
       };
       try {
@@ -167,36 +240,40 @@ export function TrainPage() {
         while (streamOpen) {
           const { done, value } = await reader.read();
           if (done) {
-            // Process any remaining data in buffer
-            if (buffer.trim()) {
-              const lines = buffer.split('\n');
-              for (const line of lines) {
-                if (line.trim()) {
-                  processSSELine(line.trim());
-                }
-              }
+            if (buffer.length > 0) {
+              processSSELine(buffer);
             }
+            processSSELine('');
             streamOpen = false;
             break;
           }
           buffer += decoder.decode(value, { stream: true });
-          // Process complete lines
           const lines = buffer.split('\n');
           buffer = lines.pop() || ''; // Keep incomplete line in buffer
           for (const line of lines) {
-            if (line.trim()) {
-              processSSELine(line.trim());
-            }
+            processSSELine(line);
           }
         }
       } catch (error) {
         console.error('Error reading SSE stream:', error);
+        const recovered = await hasModelAdvanced(datasetMode, previousSignature);
+        if (recovered) {
+          markRecoveredCompletion('Training completed. The live progress stream disconnected near the end.');
+          trainingFinished = true;
+          return;
+        }
         setStreamWarning('Connection to the training stream was interrupted. You can retry the training run.');
         setTrainingStatus('error');
         setErrorMessage('Failed to read training progress. Please check your connection.');
         globalTrainingInProgress = false;
       }
       if (!trainingFinished && globalTrainingInProgress) {
+        const recovered = await hasModelAdvanced(datasetMode, previousSignature);
+        if (recovered) {
+          markRecoveredCompletion('Training completed, but the progress stream disconnected before final confirmation.');
+          trainingFinished = true;
+          return;
+        }
         setStreamWarning('Training stream disconnected before completion. You can restart the run to continue.');
         setTrainingStatus('error');
         globalTrainingInProgress = false;
@@ -206,7 +283,15 @@ export function TrainPage() {
       globalTrainingInProgress = false;
       setErrorMessage(error instanceof Error ? error.message : 'Failed to start training');
     }
-  }, [uploadedFile, datasetMode, trainingQuality, toApiUrl]);
+  }, [
+    uploadedFile,
+    datasetMode,
+    trainingQuality,
+    toApiUrl,
+    fetchLatestModelSignature,
+    hasModelAdvanced,
+    markRecoveredCompletion,
+  ]);
   // Warn before navigating away during training
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -385,7 +470,7 @@ export function TrainPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.json,text/csv,application/json"
+              accept=".csv,.json,.xlsx,.xls,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
               onChange={handleFileSelect}
               className="hidden"
               id="file-upload"
@@ -404,7 +489,7 @@ export function TrainPage() {
                   <p className="text-sm font-medium text-ink-900">
                     {uploadedFile ? uploadedFile.name : 'Click to upload or drag and drop'}
                   </p>
-                  <p className="text-xs text-ink-500 mt-1">CSV or JSON files accepted</p>
+                  <p className="text-xs text-ink-500 mt-1">CSV, JSON, or Excel files accepted</p>
                 </div>
               </div>
             </label>
