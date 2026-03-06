@@ -834,6 +834,26 @@ async def _run_pipeline(dataset: PreparedDataset) -> AsyncGenerator[dict[str, st
         }
         yield _sse("ingarch", {"status": "complete", **ingarch_payload})
 
+        # Auto-generate a forecast report now that training is complete
+        yield _sse("ingarch_training", {"status": "running", "message": "Auto-generating post-training forecast report...", "progress": 99})
+        try:
+            from api.core.forecast_service import ForecastService
+            from api.core.report_service import ReportService
+            from datetime import datetime
+
+            f_service = ForecastService()
+            forecast_result = await asyncio.to_thread(f_service.forecast, 14, dataset.mode)
+            if forecast_result.get("status") == "success":
+                forecast_result["mode_used"] = dataset.mode
+                exports_dir = REPORTS_DIR / "exports"
+                exports_dir.mkdir(parents=True, exist_ok=True)
+                r_service = ReportService(exports_dir)
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                pdf_filename = f"Training_Forecast_Report_{dataset.mode.upper()}_{ts}.pdf"
+                await asyncio.to_thread(r_service.generate_pdf, forecast_result, pdf_filename)
+        except Exception as e:
+            logger.error(f"Failed to auto-generate forecast report after training: {str(e)}")
+
         # Training complete - NB-INGARCH model ready for forecasting
         # This model captures overdispersion, volatility clustering, and exogenous effects
         # to provide accurate forecasts of daily customer arrivals for retail operations

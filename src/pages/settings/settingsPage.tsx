@@ -93,6 +93,7 @@ export function SettingsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
 
   // Ensure time strings are always valid HH:MM to avoid native input pattern errors
   const normalizeTime = (value?: string | null): string => {
@@ -151,8 +152,8 @@ export function SettingsPage() {
       const payload =
         section === 'automation' && typeof newSettings === 'object' && newSettings !== null
           ? {
-            ...(newSettings as Automation),
-            auto_forecast_time: normalizeTime((newSettings as Automation).auto_forecast_time),
+            ...(newSettings as any),
+            auto_forecast_time: normalizeTime((newSettings as any).auto_forecast_time),
           }
           : newSettings;
 
@@ -230,665 +231,116 @@ export function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-ink-900">System Configuration</h1>
-          <p className="text-sm text-ink-600 mt-1">Configure NB-INGARCH forecasting engine and system parameters</p>
+          <p className="text-sm text-ink-600 mt-1">Configure your forecasting preferences and system settings</p>
         </div>
-        {systemHealth && (
-          <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-white border border-border rounded-lg">
-            <div className={`w-2 h-2 rounded-full ${systemHealth.database.healthy ? 'bg-accent-500' : 'bg-ink-400'}`}></div>
-            <span className="text-xs font-medium text-ink-700">
-              {systemHealth.database.healthy ? 'Operational' : 'Degraded'}
-            </span>
-            {systemHealth.models.lite_available && (
-              <span className="text-xs text-ink-500">•</span>
-            )}
-            {systemHealth.models.lite_available && (
-              <span className="text-xs text-ink-600">Lite Model Ready</span>
-            )}
+        {successMessage && (
+          <div className="bg-accent-50 border border-accent-200 rounded-lg px-4 py-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+            <svg className="w-4 h-4 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-sm font-medium text-accent-900">{successMessage}</span>
           </div>
         )}
       </div>
 
-      {/* Status Messages */}
-      {error && (
-        <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-danger-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-sm text-danger-900">{error}</p>
-        </div>
-      )}
-      {successMessage && (
-        <div className="bg-accent-50 border border-accent-200 rounded-lg p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-accent-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-sm text-accent-900">{successMessage}</p>
-        </div>
-      )}
+      {/* Tab Navigation */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setActiveTab('basic')}
+          className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${activeTab === 'basic'
+            ? 'border-primary-600 text-primary-600'
+            : 'border-transparent text-ink-500 hover:text-ink-700 hover:border-ink-300'
+            }`}
+        >
+          General Settings
+        </button>
+        <button
+          onClick={() => setActiveTab('advanced')}
+          className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${activeTab === 'advanced'
+            ? 'border-primary-600 text-primary-600'
+            : 'border-transparent text-ink-500 hover:text-ink-700 hover:border-ink-300'
+            }`}
+        >
+          Advanced Configuration
+        </button>
+      </div>
 
-      {/* System Status - Moved to Top */}
-      {systemHealth && (
-        <div className="bg-white border border-border rounded-lg">
-          <div className="border-b border-border px-6 py-4">
-            <h2 className="text-lg font-semibold text-ink-900">System Status</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="p-3 bg-surface-50 rounded-lg border border-border">
-                <div className="text-xs text-ink-600 mb-1">CPU Usage</div>
-                <div className="text-lg font-semibold text-ink-900">{systemHealth.system.cpu_percent.toFixed(1)}%</div>
-                <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
-                  <div
-                    className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
-                    style={{ width: `${Math.min(systemHealth.system.cpu_percent, 100)}%` }}
-                  ></div>
+      {activeTab === 'basic' ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Health Summary */}
+          {systemHealth && (
+            <div className="bg-white border border-border rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-ink-900 mb-4">System Health</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${systemHealth.database.healthy ? 'bg-accent-500' : 'bg-danger-500'}`}></div>
+                  <div>
+                    <div className="text-sm font-medium text-ink-900">Database</div>
+                    <div className="text-xs text-ink-500">{systemHealth.database.healthy ? 'Connected & Healthy' : 'Connection Error'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${systemHealth.models.lite_available ? 'bg-accent-500' : 'bg-ink-300'}`}></div>
+                  <div>
+                    <div className="text-sm font-medium text-ink-900">Lite Model</div>
+                    <div className="text-xs text-ink-500">{systemHealth.models.lite_available ? 'Ready for Use' : 'Needs Training'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${systemHealth.models.pro_available ? 'bg-accent-500' : 'bg-ink-300'}`}></div>
+                  <div>
+                    <div className="text-sm font-medium text-ink-900">Pro Model</div>
+                    <div className="text-xs text-ink-500">{systemHealth.models.pro_available ? 'Ready for Use' : 'Needs Training'}</div>
+                  </div>
                 </div>
               </div>
-              <div className="p-3 bg-surface-50 rounded-lg border border-border">
-                <div className="text-xs text-ink-600 mb-1">Memory</div>
-                <div className="text-lg font-semibold text-ink-900">{systemHealth.system.memory_percent.toFixed(1)}%</div>
-                <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
-                  <div
-                    className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
-                    style={{ width: `${Math.min(systemHealth.system.memory_percent, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg border border-border">
-                <div className="text-xs text-ink-600 mb-1">Disk Usage</div>
-                <div className="text-lg font-semibold text-ink-900">{systemHealth.system.disk_usage.toFixed(1)}%</div>
-                <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
-                  <div
-                    className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
-                    style={{ width: `${Math.min(systemHealth.system.disk_usage, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-              <div className="p-3 bg-surface-50 rounded-lg border border-border">
-                <div className="text-xs text-ink-600 mb-1">Data Records</div>
-                <div className="text-lg font-semibold text-ink-900">{systemHealth.data.records_count.toLocaleString()}</div>
-              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-ink-600">Database</span>
-                <span className={`text-sm font-medium ${systemHealth.database.healthy ? 'text-accent-600' : 'text-ink-600'}`}>
-                  {systemHealth.database.healthy ? 'Healthy' : 'Degraded'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-ink-600">Lite Model</span>
-                <span className={`text-sm font-medium ${systemHealth.models.lite_available ? 'text-accent-600' : 'text-ink-600'}`}>
-                  {systemHealth.models.lite_available ? 'Available' : 'Not Trained'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-ink-600">Pro Model</span>
-                <span className={`text-sm font-medium ${systemHealth.models.pro_available ? 'text-accent-600' : 'text-ink-600'}`}>
-                  {systemHealth.models.pro_available ? 'Available' : 'Not Trained'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* NB-INGARCH Core Configuration */}
-      <div className="bg-white border border-border rounded-lg">
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-ink-900">NB-INGARCH Engine</h2>
-              <p className="text-sm text-ink-600 mt-1">Core forecasting model parameters</p>
+          {/* Core Preferences */}
+          <div className="bg-white border border-border rounded-lg">
+            <div className="border-b border-border px-6 py-4">
+              <h2 className="text-lg font-semibold text-ink-900">Forecasting Preferences</h2>
             </div>
-            {saving === 'nb_ingarch_config' && (
-              <div className="flex items-center gap-2 text-sm text-ink-500">
-                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
-                <span>Saving...</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Forecast Horizon
-              </label>
-              <input
-                type="number"
-                value={settings.nb_ingarch_config.default_forecast_horizon}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 1 && value <= 30) {
-                    updateSetting('nb_ingarch_config', {
-                      ...settings.nb_ingarch_config,
-                      default_forecast_horizon: value
-                    });
-                  }
-                }}
-                min={1}
-                max={30}
-                disabled={saving === 'nb_ingarch_config'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Days ahead to forecast (1-30)</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Training Timeout
-              </label>
-              <input
-                type="number"
-                value={settings.nb_ingarch_config.training_timeout_seconds}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 60 && value <= 1800) {
-                    updateSetting('nb_ingarch_config', {
-                      ...settings.nb_ingarch_config,
-                      training_timeout_seconds: value
-                    });
-                  }
-                }}
-                min={60}
-                max={1800}
-                disabled={saving === 'nb_ingarch_config'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Maximum training time (seconds)</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Minimum Training Samples
-              </label>
-              <input
-                type="number"
-                value={settings.nb_ingarch_config.min_training_samples}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 30 && value <= 365) {
-                    updateSetting('nb_ingarch_config', {
-                      ...settings.nb_ingarch_config,
-                      min_training_samples: value
-                    });
-                  }
-                }}
-                min={30}
-                max={365}
-                disabled={saving === 'nb_ingarch_config'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Minimum historical data points required</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Cache TTL
-              </label>
-              <input
-                type="number"
-                value={settings.nb_ingarch_config.cache_ttl_seconds}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 300 && value <= 86400) {
-                    updateSetting('nb_ingarch_config', {
-                      ...settings.nb_ingarch_config,
-                      cache_ttl_seconds: value
-                    });
-                  }
-                }}
-                min={300}
-                max={86400}
-                disabled={saving === 'nb_ingarch_config'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Forecast cache duration (seconds)</p>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-ink-900 mb-2">
-              Confidence Levels
-            </label>
-            <div className="flex gap-2">
-              {settings.nb_ingarch_config.confidence_levels.map((level, index) => (
-                <input
-                  key={index}
-                  type="number"
-                  value={level}
-                  step={0.05}
-                  min={0.01}
-                  max={0.99}
-                  onChange={(e) => {
-                    const newLevels = [...settings.nb_ingarch_config.confidence_levels];
-                    const value = parseFloat(e.target.value);
-                    if (value >= 0.01 && value <= 0.99) {
-                      newLevels[index] = value;
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-ink-900 mb-2">
+                  Forecast Window
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min="1"
+                    max="30"
+                    value={settings.nb_ingarch_config.default_forecast_horizon}
+                    onChange={(e) => {
                       updateSetting('nb_ingarch_config', {
                         ...settings.nb_ingarch_config,
-                        confidence_levels: newLevels.sort((a, b) => a - b)
+                        default_forecast_horizon: parseInt(e.target.value)
                       });
-                    }
-                  }}
-                  disabled={saving === 'nb_ingarch_config'}
-                  className="w-20 px-2 py-1.5 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-              ))}
-            </div>
-            <p className="text-xs text-ink-500 mt-1.5">Prediction interval confidence levels (P10, P50, P90)</p>
-          </div>
-
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <div>
-              <label className="text-sm font-medium text-ink-900">Enable Forecast Caching</label>
-              <p className="text-xs text-ink-500 mt-0.5">Cache forecast results to improve performance</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.nb_ingarch_config.enable_caching}
-                onChange={(e) => updateSetting('nb_ingarch_config', {
-                  ...settings.nb_ingarch_config,
-                  enable_caching: e.target.checked
-                })}
-                disabled={saving === 'nb_ingarch_config'}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
-                <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {/* Business Logic Configuration */}
-      <div className="bg-white border border-border rounded-lg">
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-ink-900">Business Logic</h2>
-              <p className="text-sm text-ink-600 mt-1">Operational parameters for actionable insights</p>
-            </div>
-            {(saving === 'staffing_config' || saving === 'inventory_config') && (
-              <div className="flex items-center gap-2 text-sm text-ink-500">
-                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
-                <span>Saving...</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="p-6 space-y-8">
-
-          {/* Staffing Logic */}
-          <div>
-            <h3 className="text-sm font-semibold text-ink-900 mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              Staffing Recommendations
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">
-                  Customers per Staff
-                </label>
-                <input
-                  type="number"
-                  value={settings.staffing_config?.customers_per_staff ?? 45}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 1) {
-                      updateSetting('staffing_config', {
-                        ...settings.staffing_config,
-                        customers_per_staff: value
-                      });
-                    }
-                  }}
-                  min={1}
-                  disabled={saving === 'staffing_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-                <p className="text-xs text-ink-500 mt-1.5">How many customers can one staff member handle?</p>
+                    }}
+                    className="flex-grow h-2 bg-surface-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                  />
+                  <span className="text-lg font-semibold text-primary-600 w-16 text-right">
+                    {settings.nb_ingarch_config.default_forecast_horizon} days
+                  </span>
+                </div>
+                <p className="text-xs text-ink-500 mt-2">Choose how many days into the future you want to see forecasts by default.</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">
-                  High Traffic Threshold
-                </label>
-                <input
-                  type="number"
-                  value={settings.staffing_config?.high_traffic_threshold ?? 150}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 10) {
-                      updateSetting('staffing_config', {
-                        ...settings.staffing_config,
-                        high_traffic_threshold: value
-                      });
-                    }
-                  }}
-                  min={10}
-                  disabled={saving === 'staffing_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger &quot;High Traffic&quot; status</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">
-                  Labor Cost per Staff (₹)
-                </label>
-                <input
-                  type="number"
-                  value={settings.staffing_config?.labor_cost_per_staff ?? 650}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 0) {
-                      updateSetting('staffing_config', {
-                        ...settings.staffing_config,
-                        labor_cost_per_staff: value
-                      });
-                    }
-                  }}
-                  min={0}
-                  disabled={saving === 'staffing_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-                <p className="text-xs text-ink-500 mt-1.5">Daily cost estimate for one staff member</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-6">
-            <h3 className="text-sm font-semibold text-ink-900 mb-4 flex items-center gap-2">
-              <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-              Inventory Alerts
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">
-                  Conversion Rate
-                </label>
-                <input
-                  type="number"
-                  value={settings.inventory_config?.conversion_rate ?? 0.18}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (value >= 0.01 && value <= 1.0) {
-                      updateSetting('inventory_config', {
-                        ...settings.inventory_config,
-                        conversion_rate: value
-                      });
-                    }
-                  }}
-                  step={0.01}
-                  min={0.01}
-                  max={1.0}
-                  disabled={saving === 'inventory_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-                <p className="text-xs text-ink-500 mt-1.5">Expected ratio of visits to sales (0.01 - 1.0)</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">
-                  Medium Risk Threshold
-                </label>
-                <input
-                  type="number"
-                  value={settings.inventory_config?.medium_risk_visits ?? 120}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 1) {
-                      updateSetting('inventory_config', {
-                        ...settings.inventory_config,
-                        medium_risk_visits: value
-                      });
-                    }
-                  }}
-                  min={1}
-                  disabled={saving === 'inventory_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger &quot;Medium Risk&quot; alert</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">
-                  High Risk Threshold
-                </label>
-                <input
-                  type="number"
-                  value={settings.inventory_config?.high_risk_visits ?? 180}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 1) {
-                      updateSetting('inventory_config', {
-                        ...settings.inventory_config,
-                        high_risk_visits: value
-                      });
-                    }
-                  }}
-                  min={1}
-                  disabled={saving === 'inventory_config'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-                <p className="text-xs text-ink-500 mt-1.5">Daily visits to trigger &quot;High Risk&quot; alert</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quality Gates */}
-      <div className="bg-white border border-border rounded-lg">
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-ink-900">Quality Gates</h2>
-              <p className="text-sm text-ink-600 mt-1">Model performance validation thresholds</p>
-            </div>
-            {saving === 'quality_gates' && (
-              <div className="flex items-center gap-2 text-sm text-ink-500">
-                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
-                <span>Saving...</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Lite vs Baseline Improvement (%)
-              </label>
-              <input
-                type="number"
-                value={settings.quality_gates.lite_vs_baseline_improvement_pct}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value);
-                  if (value >= 0 && value <= 50) {
-                    updateSetting('quality_gates', {
-                      ...settings.quality_gates,
-                      lite_vs_baseline_improvement_pct: value
-                    });
-                  }
-                }}
-                step={0.1}
-                min={0}
-                max={50}
-                disabled={saving === 'quality_gates'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Minimum sMAPE improvement over baseline</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Pro vs Lite Improvement (%)
-              </label>
-              <input
-                type="number"
-                value={settings.quality_gates.pro_vs_lite_improvement_pct}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value);
-                  if (value >= 0 && value <= 50) {
-                    updateSetting('quality_gates', {
-                      ...settings.quality_gates,
-                      pro_vs_lite_improvement_pct: value
-                    });
-                  }
-                }}
-                step={0.1}
-                min={0}
-                max={50}
-                disabled={saving === 'quality_gates'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Required Pro model improvement</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Calibration Coverage (%)
-              </label>
-              <input
-                type="number"
-                value={(settings.quality_gates.calibration_coverage_min * 100).toFixed(1)}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value);
-                  if (value >= 50 && value <= 100) {
-                    updateSetting('quality_gates', {
-                      ...settings.quality_gates,
-                      calibration_coverage_min: value / 100
-                    });
-                  }
-                }}
-                step={0.1}
-                min={50}
-                max={100}
-                disabled={saving === 'quality_gates'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Minimum prediction interval coverage</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Data Management */}
-      <div className="bg-white border border-border rounded-lg">
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-ink-900">Data Management</h2>
-              <p className="text-sm text-ink-600 mt-1">Data retention and quality monitoring</p>
-            </div>
-            {saving === 'data_management' && (
-              <div className="flex items-center gap-2 text-sm text-ink-500">
-                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
-                <span>Saving...</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Data Retention Period
-              </label>
-              <input
-                type="number"
-                value={settings.data_management.data_retention_days}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 30 && value <= 3650) {
-                    updateSetting('data_management', {
-                      ...settings.data_management,
-                      data_retention_days: value
-                    });
-                  }
-                }}
-                min={30}
-                max={3650}
-                disabled={saving === 'data_management'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Days of historical data to retain</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">
-                Anomaly Detection Threshold (σ)
-              </label>
-              <input
-                type="number"
-                value={settings.data_management.anomaly_detection_threshold}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value);
-                  if (value >= 1.0 && value <= 5.0) {
-                    updateSetting('data_management', {
-                      ...settings.data_management,
-                      anomaly_detection_threshold: value
-                    });
-                  }
-                }}
-                step={0.1}
-                min={1.0}
-                max={5.0}
-                disabled={saving === 'data_management'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-              <p className="text-xs text-ink-500 mt-1.5">Standard deviations for outlier detection</p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <div className="space-y-4 flex-1">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-4 border-t border-border">
                 <div>
-                  <label className="text-sm font-medium text-ink-900">Automatic Data Cleanup</label>
-                  <p className="text-xs text-ink-500 mt-0.5">Remove data older than retention period</p>
+                  <label className="text-sm font-medium text-ink-900">Automatic Updates</label>
+                  <p className="text-xs text-ink-500 mt-0.5">Keep forecasts up-to-date automatically when you open the app</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={settings.data_management.auto_cleanup_enabled}
-                    onChange={(e) => updateSetting('data_management', {
-                      ...settings.data_management,
-                      auto_cleanup_enabled: e.target.checked
-                    })}
-                    disabled={saving === 'data_management'}
+                    checked={settings?.auto_run ?? false}
+                    onChange={(e) => updateSetting('auto_run', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
-                    <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
-                  </div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium text-ink-900">Quality Monitoring</label>
-                  <p className="text-xs text-ink-500 mt-0.5">Monitor data quality and detect anomalies</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.data_management.quality_monitoring_enabled}
-                    onChange={(e) => updateSetting('data_management', {
-                      ...settings.data_management,
-                      quality_monitoring_enabled: e.target.checked
-                    })}
-                    disabled={saving === 'data_management'}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
+                  <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 transition-colors duration-200">
                     <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
                   </div>
                 </label>
@@ -896,297 +348,182 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Automation */}
-      <div className="bg-white border border-border rounded-lg">
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-ink-900">Automation</h2>
-              <p className="text-sm text-ink-600 mt-1">Scheduled operations and alerts</p>
-            </div>
-            {saving === 'automation' && (
-              <div className="flex items-center gap-2 text-sm text-ink-500">
-                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
-                <span>Saving...</span>
+      ) : (
+        <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+          {/* System Status - Resource Monitoring */}
+          {systemHealth && (
+            <div className="bg-white border border-border rounded-lg">
+              <div className="border-b border-border px-6 py-4">
+                <h2 className="text-lg font-semibold text-ink-900">Resource Monitoring</h2>
               </div>
-            )}
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="p-3 bg-surface-50 rounded-lg border border-border">
+                    <div className="text-xs text-ink-600 mb-1">CPU Usage</div>
+                    <div className="text-lg font-semibold text-ink-900">{systemHealth.system.cpu_percent.toFixed(1)}%</div>
+                    <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
+                      <div
+                        className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(systemHealth.system.cpu_percent, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-surface-50 rounded-lg border border-border">
+                    <div className="text-xs text-ink-600 mb-1">Memory</div>
+                    <div className="text-lg font-semibold text-ink-900">{systemHealth.system.memory_percent.toFixed(1)}%</div>
+                    <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
+                      <div
+                        className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(systemHealth.system.memory_percent, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-surface-50 rounded-lg border border-border">
+                    <div className="text-xs text-ink-600 mb-1">Disk Usage</div>
+                    <div className="text-lg font-semibold text-ink-900">{systemHealth.system.disk_usage.toFixed(1)}%</div>
+                    <div className="w-full h-1.5 bg-surface-200 rounded-full mt-2">
+                      <div
+                        className="h-1.5 bg-primary-600 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(systemHealth.system.disk_usage, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-surface-50 rounded-lg border border-border">
+                    <div className="text-xs text-ink-600 mb-1">Data Records</div>
+                    <div className="text-lg font-semibold text-ink-900">{systemHealth.data.records_count.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* NB-INGARCH Engine - Detailed */}
+          <div className="bg-white border border-border rounded-lg">
+            <div className="border-b border-border px-6 py-4">
+              <h2 className="text-lg font-semibold text-ink-900">Engine Parameters</h2>
+              <p className="text-sm text-ink-600 mt-1">Deep configuration for the NB-INGARCH forecasting heart</p>
+            </div>
+            <div className="p-6 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                 <div>
-                  <label className="text-sm font-medium text-ink-900">Automatic Forecasts</label>
-                  <p className="text-xs text-ink-500 mt-0.5">Generate forecasts automatically</p>
+                  <label className="block text-sm font-semibold text-ink-900 mb-1">Maximum Training Time</label>
+                  <p className="text-xs text-ink-500 mb-2 leading-relaxed">
+                    Controls how long the AI is allowed to study your data. Increasing this allows for more complex patterns but makes training take longer.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={settings.nb_ingarch_config.training_timeout_seconds}
+                      onChange={(e) => updateSetting('nb_ingarch_config', { ...settings.nb_ingarch_config, training_timeout_seconds: parseInt(e.target.value) })}
+                      className="w-32 px-3 py-2 text-sm border border-border rounded-lg bg-white"
+                    />
+                    <span className="text-xs text-ink-400">seconds</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-ink-900 mb-1">Required History Depth</label>
+                  <p className="text-xs text-ink-500 mb-2 leading-relaxed">
+                    The minimum number of past days of data needed before a forecast can be generated. More data typically results in much better accuracy.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={settings.nb_ingarch_config.min_training_samples}
+                      onChange={(e) => updateSetting('nb_ingarch_config', { ...settings.nb_ingarch_config, min_training_samples: parseInt(e.target.value) })}
+                      className="w-32 px-3 py-2 text-sm border border-border rounded-lg bg-white"
+                    />
+                    <span className="text-xs text-ink-400">days</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-ink-900 mb-1">Forecast Memory Duration (TTL)</label>
+                  <p className="text-xs text-ink-500 mb-2 leading-relaxed">
+                    How long the system "remembers" a forecast before recalculating it. Higher values make the app faster but may show slightly older data.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={settings.nb_ingarch_config.cache_ttl_seconds}
+                      onChange={(e) => updateSetting('nb_ingarch_config', { ...settings.nb_ingarch_config, cache_ttl_seconds: parseInt(e.target.value) })}
+                      className="w-32 px-3 py-2 text-sm border border-border rounded-lg bg-white"
+                    />
+                    <span className="text-xs text-ink-400">seconds</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-ink-900 mb-1">Certainty Intervals</label>
+                  <p className="text-xs text-ink-500 mb-2 leading-relaxed">
+                    Tracks 'Low Risk', 'Expected', and 'High Risk' scenarios. These show the range of possibilities, from best-case to worst-case.
+                  </p>
+                  <div className="flex gap-2">
+                    {settings.nb_ingarch_config.confidence_levels.map((level, index) => (
+                      <span key={index} className="px-3 py-1.5 bg-surface-100 border border-border rounded-md text-sm font-medium text-ink-700">
+                        {Math.round(level * 100)}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-6 border-t border-border">
+                <div>
+                  <label className="text-sm font-semibold text-ink-900">Enable Smart Caching</label>
+                  <p className="text-xs text-ink-500 mt-1 leading-relaxed">
+                    When enabled, the system reuses recent calculations to make switching between pages near-instant. Highly recommended.
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={settings.automation.auto_forecast_enabled}
-                    onChange={(e) => updateSetting('automation', {
-                      ...settings.automation,
-                      auto_forecast_enabled: e.target.checked
-                    })}
-                    disabled={saving === 'automation'}
+                    checked={settings.nb_ingarch_config.enable_caching}
+                    onChange={(e) => updateSetting('nb_ingarch_config', { ...settings.nb_ingarch_config, enable_caching: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
+                  <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 transition-colors duration-200">
                     <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
                   </div>
                 </label>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">Forecast Time</label>
-                <input
-                  type="time"
-                  value={settings.automation.auto_forecast_time}
-                  onChange={(e) => updateSetting('automation', {
-                    ...settings.automation,
-                    auto_forecast_time: e.target.value
-                  })}
-                  disabled={!settings.automation.auto_forecast_enabled || saving === 'automation'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-border">
-                <div>
-                  <label className="text-sm font-medium text-ink-900">Automatic Retraining</label>
-                  <p className="text-xs text-ink-500 mt-0.5">Retrain models periodically</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.automation.auto_training_enabled}
-                    onChange={(e) => updateSetting('automation', {
-                      ...settings.automation,
-                      auto_training_enabled: e.target.checked
-                    })}
-                    disabled={saving === 'automation'}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
-                    <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
-                  </div>
-                </label>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-ink-900 mb-2">Retraining Interval</label>
-                <input
-                  type="number"
-                  value={settings.automation.auto_training_interval_days}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 7 && value <= 90) {
-                      updateSetting('automation', {
-                        ...settings.automation,
-                        auto_training_interval_days: value
-                      });
-                    }
-                  }}
-                  min={7}
-                  max={90}
-                  disabled={!settings.automation.auto_training_enabled || saving === 'automation'}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-                />
-                <p className="text-xs text-ink-500 mt-1.5">Days between retraining cycles</p>
-              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <div>
-              <label className="text-sm font-medium text-ink-900">Performance Alerts</label>
-              <p className="text-xs text-ink-500 mt-0.5">Notify when model accuracy drops below threshold</p>
+          {/* System Reset */}
+          <div className="bg-white border border-danger-300 rounded-lg overflow-hidden">
+            <div className="px-6 py-4 bg-danger-50 border-b border-danger-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h2 className="text-lg font-semibold text-danger-900">Danger Zone</h2>
+              </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.automation.alerts_enabled}
-                onChange={(e) => updateSetting('automation', {
-                  ...settings.automation,
-                  alerts_enabled: e.target.checked
-                })}
-                disabled={saving === 'automation'}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
-                <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {/* Advanced Configuration */}
-      <div className="bg-white border border-border rounded-lg">
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-ink-900">Advanced Configuration</h2>
-            {saving === 'advanced_config' && (
-              <div className="flex items-center gap-2 text-sm text-ink-500">
-                <div className="w-4 h-4 border-2 border-ink-300 border-t-ink-600 rounded-full animate-spin"></div>
-                <span>Saving...</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-ink-900 mb-2">Logging Level</label>
-            <select
-              value={settings.advanced_config.logging_level}
-              onChange={(e) => updateSetting('advanced_config', {
-                ...settings.advanced_config,
-                logging_level: e.target.value
-              })}
-              disabled={saving === 'advanced_config'}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-            >
-              <option value="DEBUG">Debug</option>
-              <option value="INFO">Info</option>
-              <option value="WARNING">Warning</option>
-              <option value="ERROR">Error</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">DB Pool Size</label>
-              <input
-                type="number"
-                value={settings.advanced_config.database_pool_size}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 1 && value <= 20) {
-                    updateSetting('advanced_config', {
-                      ...settings.advanced_config,
-                      database_pool_size: value
-                    });
+            <div className="p-6 border-t border-danger-100">
+              <p className="text-sm text-ink-600 mb-4">
+                Resetting the system will permanently delete all uploaded data, trained models, and forecast history.
+              </p>
+              <button
+                onClick={async () => {
+                  const confirmed = window.confirm('Are you absolutely sure you want to reset all data? This cannot be undone.');
+                  if (!confirmed) return;
+                  try {
+                    await apiDelete('/api/data/clear_all');
+                    Object.keys(localStorage).filter(k => k.startsWith('storepulse_')).forEach(k => localStorage.removeItem(k));
+                    window.location.reload();
+                  } catch (error) {
+                    setError('Failed to reset system');
                   }
                 }}
-                min={1}
-                max={20}
-                disabled={saving === 'advanced_config'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-ink-900 mb-2">API Timeout (s)</label>
-              <input
-                type="number"
-                value={settings.advanced_config.api_timeout_seconds}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 10 && value <= 300) {
-                    updateSetting('advanced_config', {
-                      ...settings.advanced_config,
-                      api_timeout_seconds: value
-                    });
-                  }
-                }}
-                min={10}
-                max={300}
-                disabled={saving === 'advanced_config'}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-ink-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-surface-100 disabled:cursor-not-allowed"
-              />
+                className="px-4 py-2 bg-white border border-danger-300 text-danger-700 rounded-lg text-sm font-medium hover:bg-danger-50 transition-colors"
+              >
+                Reset System Data
+              </button>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <div>
-              <label className="text-sm font-medium text-ink-900">Debug Mode</label>
-              <p className="text-xs text-ink-500 mt-0.5">Enable detailed diagnostic logging</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.advanced_config.enable_debug_mode}
-                onChange={(e) => updateSetting('advanced_config', {
-                  ...settings.advanced_config,
-                  enable_debug_mode: e.target.checked
-                })}
-                disabled={saving === 'advanced_config'}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
-                <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
-              </div>
-            </label>
-          </div>
         </div>
-      </div>
-
-      {/* User Preferences */}
-      <div className="bg-white border border-border rounded-lg">
-        <div className="border-b border-border px-6 py-4">
-          <h2 className="text-lg font-semibold text-ink-900">User Preferences</h2>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-sm font-medium text-ink-900">Auto-Run Forecasts</label>
-              <p className="text-xs text-ink-500 mt-0.5">Automatically refresh forecasts when opening pages</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings?.auto_run ?? false}
-                onChange={(e) => updateSetting('auto_run', e.target.checked)}
-                disabled={saving === 'auto_run'}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-surface-300 rounded-full peer peer-checked:bg-primary-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors duration-200">
-                <div className="w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 translate-x-0.5 translate-y-0.5 peer-checked:translate-x-5"></div>
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {/* System Reset */}
-      <div className="bg-white border border-danger-300 rounded-lg">
-        <div className="border-b border-danger-200 px-6 py-4 bg-danger-50">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h2 className="text-lg font-semibold text-ink-900">System Reset</h2>
-          </div>
-        </div>
-        <div className="p-6">
-          <p className="text-sm text-ink-600 mb-4">
-            Permanently delete all data, models, forecasts, and settings. This action cannot be undone.
-          </p>
-          <button
-            onClick={async () => {
-              const confirmed = window.confirm(
-                'WARNING: This will permanently delete all data, models, forecasts, and settings.\n\n' +
-                'This action CANNOT be undone.\n\n' +
-                'Are you absolutely sure?'
-              );
-              if (!confirmed) return;
-
-              try {
-                await apiDelete('/api/data/clear_all');
-                Object.keys(localStorage)
-                  .filter(k => k.startsWith('storepulse_'))
-                  .forEach(k => localStorage.removeItem(k));
-                window.location.reload();
-              } catch (error) {
-                console.error('Clear error:', error);
-                setError('Failed to reset system');
-              }
-            }}
-            className="btn-secondary text-sm px-4 py-2 border-danger-300 text-danger-700 hover:bg-danger-50"
-          >
-            Reset All Data
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

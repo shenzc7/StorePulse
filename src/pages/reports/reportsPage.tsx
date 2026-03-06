@@ -29,6 +29,7 @@ export function ReportsPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
+  const [reportMode, setReportMode] = useState<'lite' | 'pro'>('pro');
 
   useEffect(() => {
     fetchReports();
@@ -62,7 +63,7 @@ export function ReportsPage() {
       const response = await apiPost<GenerateResponse>('/api/reports/generate', {
         title: 'Strategic Demand Forecast',
         days: 14,
-        mode: 'pro' // Default to Pro for best quality
+        mode: reportMode
       });
 
       if (response && response.download_url) {
@@ -94,7 +95,7 @@ export function ReportsPage() {
     ? reports
     : reports.filter(r => r.category === filter);
 
-  const categories = Array.from(new Set(reports.map(r => r.category))).filter(cat => cat !== 'exports');
+  const categories = Array.from(new Set(reports.map(r => r.category)));
 
   if (loading && reports.length === 0) {
     return (
@@ -114,25 +115,51 @@ export function ReportsPage() {
             Download generated forecasts, backtests, and business insights.
           </p>
         </div>
-        <button
-          onClick={generateReport}
-          disabled={generating}
-          className="btn-primary flex items-center gap-2"
-        >
-          {generating ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span>Generating PDF...</span>
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>Generate New Report</span>
-            </>
-          )}
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex bg-surface-50 p-1 rounded-xl border border-border/60 shadow-sm">
+            <button
+              onClick={() => setReportMode('lite')}
+              disabled={generating}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${reportMode === 'lite'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-ink-400 hover:text-ink-600'
+                }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${reportMode === 'lite' ? 'bg-primary-500' : 'bg-transparent border border-ink-300'}`}></div>
+              LITE
+            </button>
+            <button
+              onClick={() => setReportMode('pro')}
+              disabled={generating}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-2 ${reportMode === 'pro'
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-ink-400 hover:text-ink-600'
+                }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${reportMode === 'pro' ? 'bg-amber-500 animate-pulse-subtle' : 'bg-transparent border border-ink-300'}`}></div>
+              PRO
+            </button>
+          </div>
+          <button
+            onClick={generateReport}
+            disabled={generating}
+            className="btn-primary flex items-center gap-2"
+          >
+            {generating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Generating PDF...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Generate New Report</span>
+              </>
+            )}
+          </button>
+        </div>
       </header>
 
       {error && (

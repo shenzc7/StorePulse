@@ -36,14 +36,6 @@ interface ScenarioResult {
   inventory_impact: Array<{ sku: string; name: string; delta: number }>;
 }
 
-interface SavedScenario {
-  id: number;
-  name: string;
-  created_at: string;
-  baseline_date: string | null;
-  avg_impact: number | null;
-  scenario_config: ScenarioConfig;
-}
 
 export function LabPage() {
   // State
@@ -57,32 +49,18 @@ export function LabPage() {
 
   // Quick scenarios from API
   const [quickScenarios, setQuickScenarios] = useState<ScenarioConfig[]>([]);
-  const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
 
   // Selected scenario
-  const [selectedScenario, setSelectedScenario] = useState<ScenarioConfig | null>(null);
-  const [customScenario, setCustomScenario] = useState<ScenarioConfig>({
-    name: 'Custom Scenario',
-    description: '',
-    promo_boost: 0,
-    weather_impact: 'normal',
-    holiday_effect: false,
-    payday_shift: false,
-    price_sensitivity: 0,
-    competitor_action: 'none',
-  });
+  const [, setSelectedScenario] = useState<ScenarioConfig | null>(null);
 
   // Analysis results
   const [results, setResults] = useState<ScenarioResult[]>([]);
-  const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'quick' | 'custom' | 'saved'>('quick');
 
   // Fetch quick scenarios on mount
   useEffect(() => {
     fetchQuickScenarios();
-    fetchSavedScenarios();
   }, []);
 
   const fetchQuickScenarios = async () => {
@@ -94,14 +72,6 @@ export function LabPage() {
     }
   };
 
-  const fetchSavedScenarios = async () => {
-    try {
-      const data = await apiGet<{ scenarios: SavedScenario[] }>('/api/whatif/scenarios?limit=10');
-      setSavedScenarios(data.scenarios);
-    } catch (err) {
-      console.error('Failed to load saved scenarios:', err);
-    }
-  };
 
   const analyzeScenario = async (scenario: ScenarioConfig) => {
     setAnalyzing(true);
@@ -127,34 +97,6 @@ export function LabPage() {
     }
   };
 
-  const saveScenario = async () => {
-    if (!results.length || !selectedScenario) return;
-
-    try {
-      setLoading(true);
-      await apiPost('/api/whatif/save', {
-        scenario_name: selectedScenario.name,
-        baseline_date: baselineDate,
-        horizon_days: horizonDays,
-        mode,
-        scenario_config: selectedScenario,
-        forecast_results: results[0],
-      });
-      await fetchSavedScenarios();
-    } catch (err) {
-      const apiError = err as ApiError;
-      setError(apiError.message || 'Failed to save scenario');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getImpactColor = (pct: number) => {
-    if (pct > 10) return 'text-green-700 bg-green-100';
-    if (pct > 0) return 'text-green-600 bg-green-50';
-    if (pct > -10) return 'text-yellow-700 bg-yellow-100';
-    return 'text-red-700 bg-red-100';
-  };
 
   const getStrengthBadge = (strength: string) => {
     switch (strength) {
@@ -213,8 +155,8 @@ export function LabPage() {
                   key={m}
                   onClick={() => setMode(m)}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${mode === m
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-surface-100 text-ink-700 hover:bg-surface-200'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-surface-100 text-ink-700 hover:bg-surface-200'
                     }`}
                 >
                   {m.toUpperCase()}
@@ -225,190 +167,33 @@ export function LabPage() {
         </div>
       </div>
 
-      {/* Scenario Tabs */}
-      <div className="flex items-center gap-2 p-1 bg-surface-100 rounded-lg border border-border">
-        {[
-          { key: 'quick' as const, label: 'Quick Scenarios' },
-          { key: 'custom' as const, label: 'Custom Builder' },
-          { key: 'saved' as const, label: 'Saved Scenarios' },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 px-4 py-2.5 rounded-md font-medium text-sm transition-all ${activeTab === tab.key
-                ? 'bg-white shadow-sm text-primary-600 border border-border'
-                : 'text-ink-600 hover:text-ink-900'
-              }`}
+
+      {/* Quick Scenarios (Preset) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {quickScenarios.map((scenario, index) => (
+          <div
+            key={index}
+            className="card p-5 hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-primary-200"
+            onClick={() => analyzeScenario(scenario)}
           >
-            {tab.label}
-          </button>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-ink-900">{scenario.name}</h3>
+                <p className="text-xs text-ink-600 mt-1">{scenario.description}</p>
+              </div>
+            </div>
+            <button className="w-full mt-4 btn-secondary text-xs py-2">
+              Analyze Impact
+            </button>
+          </div>
         ))}
       </div>
 
-      {/* Quick Scenarios */}
-      {activeTab === 'quick' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickScenarios.map((scenario, index) => (
-            <div
-              key={index}
-              className="card p-5 hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-primary-200"
-              onClick={() => analyzeScenario(scenario)}
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-bold text-ink-900">{scenario.name}</h3>
-                  <p className="text-xs text-ink-600 mt-1">{scenario.description}</p>
-                </div>
-              </div>
-              <button className="w-full mt-4 btn-secondary text-xs py-2">
-                Analyze Impact
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Custom Builder */}
-      {activeTab === 'custom' && (
-        <div className="card p-6">
-          <h3 className="text-base font-bold text-ink-900 mb-4">Build Custom Scenario</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-ink-700 mb-2">Scenario Name</label>
-              <input
-                type="text"
-                value={customScenario.name}
-                onChange={(e) => setCustomScenario({ ...customScenario, name: e.target.value })}
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm"
-                placeholder="My Custom Scenario"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-700 mb-2">Promo Boost ({Math.round(customScenario.promo_boost * 100)}%)</label>
-              <input
-                type="range"
-                min={0}
-                max={50}
-                value={customScenario.promo_boost * 100}
-                onChange={(e) => setCustomScenario({ ...customScenario, promo_boost: parseInt(e.target.value) / 100 })}
-                className="w-full"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-700 mb-2">Weather Impact</label>
-              <select
-                value={customScenario.weather_impact}
-                onChange={(e) => setCustomScenario({ ...customScenario, weather_impact: e.target.value })}
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm"
-              >
-                <option value="normal">Normal Weather</option>
-                <option value="rainy">Rainy (reduces traffic)</option>
-                <option value="sunny">Sunny (increases traffic)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-700 mb-2">Competitor Action</label>
-              <select
-                value={customScenario.competitor_action}
-                onChange={(e) => setCustomScenario({ ...customScenario, competitor_action: e.target.value })}
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm"
-              >
-                <option value="none">No Action</option>
-                <option value="promo">Running Promotion</option>
-                <option value="new_store">New Store Opening</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-ink-700 mb-2">Price Sensitivity ({customScenario.price_sensitivity * 100}%)</label>
-              <input
-                type="range"
-                min={-50}
-                max={50}
-                value={customScenario.price_sensitivity * 100}
-                onChange={(e) => setCustomScenario({ ...customScenario, price_sensitivity: parseInt(e.target.value) / 100 })}
-                className="w-full"
-              />
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={customScenario.holiday_effect}
-                  onChange={(e) => setCustomScenario({ ...customScenario, holiday_effect: e.target.checked })}
-                  className="rounded border-border"
-                />
-                <span className="text-sm text-ink-700">Holiday/Weekend Effect</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={customScenario.payday_shift}
-                  onChange={(e) => setCustomScenario({ ...customScenario, payday_shift: e.target.checked })}
-                  className="rounded border-border"
-                />
-                <span className="text-sm text-ink-700">Payday Period Effect</span>
-              </label>
-            </div>
-          </div>
-
-          <button
-            onClick={() => analyzeScenario(customScenario)}
-            disabled={analyzing}
-            className="mt-6 btn-primary w-full"
-          >
-            {analyzing ? 'Analyzing...' : 'Analyze Custom Scenario'}
-          </button>
-        </div>
-      )}
-
-      {/* Saved Scenarios */}
-      {activeTab === 'saved' && (
-        <div className="space-y-4">
-          {savedScenarios.length === 0 ? (
-            <div className="card p-8 text-center">
-              <p className="text-ink-600">No saved scenarios yet. Run an analysis and save it for future reference.</p>
-            </div>
-          ) : (
-            savedScenarios.map((scenario) => (
-              <div key={scenario.id} className="card p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-ink-900">{scenario.name}</h3>
-                    <p className="text-xs text-ink-600 mt-1">
-                      {scenario.baseline_date ? `Baseline: ${scenario.baseline_date}` : 'No date'} •
-                      Created: {new Date(scenario.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {scenario.avg_impact !== null && (
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getImpactColor(scenario.avg_impact)}`}>
-                        {scenario.avg_impact > 0 ? '+' : ''}{scenario.avg_impact.toFixed(1)}%
-                      </span>
-                    )}
-                    <button
-                      onClick={() => analyzeScenario(scenario.scenario_config)}
-                      className="btn-secondary text-xs"
-                    >
-                      Re-run
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
 
       {/* Error */}
       {error && (
@@ -445,9 +230,6 @@ export function LabPage() {
                     <h2 className="text-lg font-bold text-ink-900">{result.scenario_name}</h2>
                     <p className="text-sm text-ink-600">Impact Analysis Results</p>
                   </div>
-                  <button onClick={saveScenario} disabled={loading} className="btn-primary text-sm">
-                    {loading ? 'Saving...' : 'Save Scenario'}
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

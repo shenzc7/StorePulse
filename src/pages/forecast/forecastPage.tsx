@@ -28,20 +28,25 @@ interface StaffingRecommendation {
   role_breakdown: Record<string, number>;
   labor_cost_estimate: number;
   is_high_traffic: boolean;
+  confidence_impact?: string;
+  upper_bound_visits?: number;
 }
 
 interface InventoryAlert {
   date: string;
   estimated_daily_sales: number;
+  upper_sales_potential?: number;
   inventory_priorities: Record<string, string>;
   stockout_risk: string;
-  recommended_action: string;
+  reasoning?: string;
+  recommended_action?: string;
 }
 
 interface ForecastMetadata {
   trained_at?: string;
   trained_records?: number;
   data_records?: number;
+  model_version?: string;
   data_range?: {
     min?: string | null;
     max?: string | null;
@@ -202,9 +207,11 @@ export function ForecastPage() {
   }
 
   // Computed Metrics
-  const tomorrow = predictions[0];
-  const trendWindow = Math.min(3, predictions.length);
+  const staffing = forecastData.staffing_recommendations || [];
+  const inventory = forecastData.inventory_alerts || [];
   const avgVisits = predictions.reduce((sum, p) => sum + p.predicted_visits, 0) / (predictions.length || 1);
+
+  const trendWindow = Math.min(3, predictions.length);
   const recentAvg = predictions
     .slice(0, trendWindow)
     .reduce((sum, p) => sum + p.predicted_visits, 0) / (trendWindow || 1);
@@ -213,29 +220,8 @@ export function ForecastPage() {
     .reduce((sum, p) => sum + p.predicted_visits, 0) / (trendWindow || 1);
   const trendPercentage = recentAvg > 0 ? ((laterAvg - recentAvg) / recentAvg) * 100 : 0;
 
-  const tomorrowStaff = forecastData.staffing_recommendations?.[0]?.recommended_staff || 0;
-  const tomorrowRangeWidth = tomorrow ? Math.max(0, tomorrow.upper_bound - tomorrow.lower_bound) : 0;
-
-  const riskCount = (forecastData.inventory_alerts || []).filter(
-    a => a.stockout_risk === 'high' || a.stockout_risk === 'medium'
-  ).length;
-
-  const inventoryAlert = forecastData.inventory_alerts?.[0];
-  const inventorySummary = inventoryAlert?.stockout_risk === 'high'
-    ? "Immediate restocking of high-risk items is CRITICAL."
-    : inventoryAlert?.stockout_risk === 'medium'
-      ? "Monitor stock levels closely for upcoming demand."
-      : "Inventory levels appear stable for tomorrow.";
-
-  const peakPrediction = predictions.reduce((prev, curr) =>
-    (curr.predicted_visits > prev.predicted_visits) ? curr : prev,
-    predictions[0]
-  );
-
-  const isPeakComing = peakPrediction.date !== tomorrow?.date;
-
   return (
-    <div className="animate-fade-in p-6 max-w-7xl mx-auto">
+    <div className="animate-fade-in space-y-6">
       <ForecastHeader
         lastUpdated={lastUpdated}
         mode={mode}
@@ -246,36 +232,35 @@ export function ForecastPage() {
         metadata={forecastData.metadata}
       />
 
-      <SmartSummary
-        tomorrowVisits={tomorrow?.predicted_visits || 0}
-        isHighTraffic={tomorrow?.predicted_visits > (avgVisits * 1.15)}
-        staffRecommendation={`Deploy ${tomorrowStaff} staff members across recommended roles.`}
-        inventoryUrgency={inventorySummary}
-        warnings={forecastData.metadata?.warnings}
-        peakDay={isPeakComing ? {
-          date: peakPrediction.date,
-          visits: peakPrediction.predicted_visits
-        } : undefined}
-      />
+      <div className="grid grid-cols-1 gap-6">
+        <SmartSummary
+          predictions={predictions}
+          staffing={staffing}
+          inventory={inventory}
+          avgVisits={avgVisits}
+          trendPercentage={trendPercentage}
+          warnings={forecastData.metadata?.warnings}
+          metadata={forecastData.metadata}
+        />
 
-      <MetricCards
-        tomorrowVisits={tomorrow?.predicted_visits || 0}
-        tomorrowStaff={tomorrowStaff}
-        tomorrowRangeWidth={tomorrowRangeWidth}
-        avgVisits={avgVisits}
-        trendPercentage={trendPercentage}
-        riskCount={riskCount}
-      />
+        <MetricCards
+          predictions={predictions}
+          staffing={staffing}
+          inventory={inventory}
+          avgVisits={avgVisits}
+          trendPercentage={trendPercentage}
+        />
 
-      <ForecastChart
-        predictions={predictions}
-        height={320}
-      />
+        <ForecastChart
+          predictions={predictions}
+          height={380}
+        />
 
-      <IntelligentInsights
-        staffing={forecastData.staffing_recommendations || []}
-        inventory={forecastData.inventory_alerts || []}
-      />
+        <IntelligentInsights
+          staffing={staffing}
+          inventory={inventory}
+        />
+      </div>
     </div>
   );
 }

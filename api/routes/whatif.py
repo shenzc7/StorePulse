@@ -166,7 +166,8 @@ async def analyze_scenarios(request: WhatIfRequest) -> Dict[str, List[ScenarioRe
 
             # Calculate deltas from baseline
             forecast_deltas = []
-            for i in range(horizon_days):
+            actual_horizon = min(horizon_days, len(baseline_forecast["predictions"]), len(scenario_forecast["predictions"]))
+            for i in range(actual_horizon):
                 baseline_visits = baseline_forecast["predictions"][i]["predicted_visits"]
                 scenario_visits = scenario_forecast["predictions"][i]["predicted_visits"]
                 delta_pct = ((scenario_visits - baseline_visits) / baseline_visits * 100) if baseline_visits > 0 else 0
@@ -180,7 +181,7 @@ async def analyze_scenarios(request: WhatIfRequest) -> Dict[str, List[ScenarioRe
                 })
 
             # Calculate overall impact
-            avg_delta_pct = sum(d["delta_pct"] for d in forecast_deltas) / len(forecast_deltas)
+            avg_delta_pct = sum(d["delta_pct"] for d in forecast_deltas) / len(forecast_deltas) if forecast_deltas else 0
             total_delta = sum(d["delta"] for d in forecast_deltas)
 
             impact_summary = {

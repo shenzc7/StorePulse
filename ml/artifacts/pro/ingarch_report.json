@@ -1,6 +1,6 @@
 {
-  "dataset": "data/demo_pro.csv",
-  "rows": 150,
+  "dataset": "/var/folders/mr/k56xtgss4jb13qczsw_6mbbr0000gn/T/storepulse_train_v6sc_u51/pro_sample.csv",
+  "rows": 1065,
   "feature_cols": [
     "sales",
     "conversion",
@@ -22,11 +22,14 @@
     "weather_sunny",
     "promo_type_bundle",
     "promo_type_flash",
-    "promo_type_none",
+    "promo_type_missing",
     "promo_type_percent_off",
-    "local_events_Independence Day",
-    "local_events_Labor Day",
-    "local_events_Memorial Day",
+    "local_events_Christmas",
+    "local_events_Easter",
+    "local_events_Halloween",
+    "local_events_New Year",
+    "local_events_Summer Sale",
+    "local_events_Valentine's",
     "local_events_missing",
     "rolling_mean_7",
     "rolling_std_7",
@@ -42,30 +45,30 @@
     "quarter"
   ],
   "model_spec": {
-    "p": 1,
+    "p": 2,
     "q": 1,
     "type": "INGARCH"
   },
   "training_metrics": {
-    "smape": 36.510800732476746,
-    "mase": 0.017898055143697963,
-    "rmse": 78.11559565378447,
-    "ma7_smape": 39.222030507889,
-    "naive_smape": 48.976572837994155
+    "smape": 30.502451470509595,
+    "mase": 0.014733130268400467,
+    "rmse": 76.5511064568183,
+    "ma7_smape": 39.55926478657376,
+    "naive_smape": 49.06986077102208
   },
   "quality_gate": {
     "applies": false,
-    "threshold_pct": 0.0,
-    "lift_pct": 6.9125176343609445,
+    "threshold_pct": 8.0,
+    "lift_pct": 22.89429129921042,
     "passed": true
   },
   "backtest": {
     "csv": "/Users/shenzc/Downloads/side projects/StorePulse/reports/backtests/ingarch_backtest.csv",
-    "folds": 0,
+    "folds": 34,
     "aggregate": {
-      "smape": NaN,
-      "mase": NaN,
-      "rmse": NaN
+      "smape": 32.660501790546995,
+      "mase": 0.01631502679900473,
+      "rmse": 77.59248981487758
     }
   }
 }
