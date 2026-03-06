@@ -39,7 +39,7 @@ interface ScenarioResult {
 
 export function LabPage() {
   // State
-  const [mode, setMode] = useState<'lite' | 'pro'>('lite');
+  const [mode] = useState<'pro'>('pro'); // Hardcoded to pro mode per rules
   const [horizonDays, setHorizonDays] = useState(14);
   const [baselineDate, setBaselineDate] = useState(() => {
     const tomorrow = new Date();
@@ -122,46 +122,59 @@ export function LabPage() {
       </header>
 
       {/* Configuration Panel */}
-      <div className="card p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-ink-700 mb-2">Baseline Date</label>
-            <input
-              type="date"
-              value={baselineDate}
-              onChange={(e) => setBaselineDate(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-ink-700 mb-2">Forecast Horizon</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="range"
-                min={7}
-                max={30}
-                value={horizonDays}
-                onChange={(e) => setHorizonDays(parseInt(e.target.value))}
-                className="flex-1"
-              />
-              <span className="text-sm font-semibold text-ink-900 w-16">{horizonDays} days</span>
+      <div className="bg-white rounded-3xl border border-border shadow-sm p-8 flex flex-col md:flex-row gap-10">
+        <div className="flex-1">
+          <label className="flex items-center gap-2 text-sm font-bold text-ink-900 mb-1">
+            <svg className="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            Baseline Date
+          </label>
+          <p className="text-xs text-ink-500 mb-4">The forecasting pivot point</p>
+          <input
+            type="date"
+            value={baselineDate}
+            onChange={(e) => setBaselineDate(e.target.value)}
+            className="w-full xl:w-2/3 px-4 py-3 bg-surface-50 border border-border rounded-xl shadow-inner text-sm font-medium text-ink-900 transition-all focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none hover:border-ink-300 cursor-pointer"
+          />
+        </div>
+
+        <div className="flex-1">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-ink-900 mb-1">
+                <svg className="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                Forecast Horizon
+              </label>
+              <p className="text-xs text-ink-500">Days to simulate forward</p>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-ink-700 mb-2">Model Mode</label>
-            <div className="flex gap-2">
-              {(['lite', 'pro'] as const).map((m) => (
+            <div className="flex gap-1.5">
+              {[7, 14, 30].map(days => (
                 <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${mode === m
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-surface-100 text-ink-700 hover:bg-surface-200'
+                  key={days}
+                  onClick={() => setHorizonDays(days)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${horizonDays === days
+                    ? 'bg-ink-900 text-white shadow-sm'
+                    : 'bg-surface-100 text-ink-600 hover:bg-surface-200 hover:text-ink-900'
                     }`}
                 >
-                  {m.toUpperCase()}
+                  {days}D
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 bg-surface-50 p-3.5 border border-border/60 rounded-xl shadow-inner group transition-colors hover:border-ink-300 hover:bg-white">
+            <input
+              type="range"
+              min={7}
+              max={30}
+              step={1}
+              value={horizonDays}
+              onChange={(e) => setHorizonDays(parseInt(e.target.value))}
+              className="flex-1 h-2 bg-surface-200 rounded-lg appearance-none cursor-pointer accent-ink-900"
+            />
+            <div className="text-right min-w-[4.5rem]">
+              <span className="text-lg font-black text-ink-900 leading-none">{horizonDays}</span>
+              <span className="text-xs font-bold text-ink-400 ml-1">Days</span>
             </div>
           </div>
         </div>
@@ -169,27 +182,36 @@ export function LabPage() {
 
 
       {/* Quick Scenarios (Preset) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <h2 className="text-sm font-bold uppercase tracking-wider text-ink-500 mt-10 mb-5 px-1">Scenario Presets</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {quickScenarios.map((scenario, index) => (
           <div
             key={index}
-            className="card p-5 hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-primary-200"
+            className="group relative bg-white border border-border/80 rounded-2xl p-6 hover:border-ink-300 hover:shadow-xl hover:shadow-ink-900/5 transition-all cursor-pointer overflow-hidden flex flex-col"
             onClick={() => analyzeScenario(scenario)}
           >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
+            {/* Background accent on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-surface-50/0 to-surface-50/0 group-hover:from-surface-50 group-hover:to-white transition-colors duration-500" />
+
+            <div className="relative z-10 flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-surface-100 group-hover:bg-white group-hover:shadow-sm border border-transparent group-hover:border-border/50 flex items-center justify-center transition-all text-ink-600 group-hover:text-ink-900">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-ink-300 group-hover:text-ink-900 group-hover:bg-surface-100 transition-colors">
+                  <svg className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-bold text-ink-900">{scenario.name}</h3>
-                <p className="text-xs text-ink-600 mt-1">{scenario.description}</p>
-              </div>
+              <h3 className="text-base font-bold text-ink-900 mb-1.5">{scenario.name}</h3>
+              <p className="text-xs text-ink-500 leading-relaxed font-medium group-hover:text-ink-600 transition-colors">{scenario.description}</p>
             </div>
-            <button className="w-full mt-4 btn-secondary text-xs py-2">
-              Analyze Impact
-            </button>
+
+            {/* Active effect indicator line */}
+            <div className="relative z-10 mt-5 h-1 w-0 group-hover:w-full bg-ink-900 rounded-full transition-all duration-500 ease-out" />
           </div>
         ))}
       </div>
@@ -233,119 +255,178 @@ export function LabPage() {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-surface-50 rounded-lg border border-border">
-                    <p className="text-xs uppercase text-ink-500 mb-1">Avg Impact</p>
-                    <p className={`text-2xl font-black ${result.impact_summary.avg_visit_delta_pct >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                      {result.impact_summary.avg_visit_delta_pct > 0 ? '+' : ''}{result.impact_summary.avg_visit_delta_pct.toFixed(1)}%
-                    </p>
+                  <div className="p-5 bg-white rounded-2xl border border-border shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wider text-ink-500 mb-2">Avg Impact</p>
+                    <div className="flex items-end gap-2">
+                      <p className={`text-3xl font-black tracking-tight ${result.impact_summary.avg_visit_delta_pct >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {result.impact_summary.avg_visit_delta_pct > 0 ? '+' : ''}{result.impact_summary.avg_visit_delta_pct.toFixed(1)}%
+                      </p>
+                      {result.impact_summary.avg_visit_delta_pct !== 0 && (
+                        <svg className={`w-5 h-5 mb-1 ${result.impact_summary.avg_visit_delta_pct > 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-4 bg-surface-50 rounded-lg border border-border">
-                    <p className="text-xs uppercase text-ink-500 mb-1">Total Delta</p>
-                    <p className="text-2xl font-black text-ink-900">
+
+                  <div className="p-5 bg-white rounded-2xl border border-border shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wider text-ink-500 mb-2">Total Delta</p>
+                    <p className={`text-3xl font-black tracking-tight ${result.impact_summary.total_visit_delta >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                       {result.impact_summary.total_visit_delta > 0 ? '+' : ''}{formatIndianNumber(result.impact_summary.total_visit_delta)}
                     </p>
                   </div>
-                  <div className="p-4 bg-surface-50 rounded-lg border border-border">
-                    <p className="text-xs uppercase text-ink-500 mb-1">Max Daily</p>
-                    <p className="text-2xl font-black text-ink-900">
-                      {formatIndianNumber(result.impact_summary.max_daily_impact)}
+
+                  <div className="p-5 bg-white rounded-2xl border border-border shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wider text-ink-500 mb-2">Peak Daily Shift</p>
+                    <p className="text-3xl font-black tracking-tight text-ink-900">
+                      ±{formatIndianNumber(result.impact_summary.max_daily_impact)}
                     </p>
                   </div>
-                  <div className="p-4 bg-surface-50 rounded-lg border border-border">
-                    <p className="text-xs uppercase text-ink-500 mb-1">Strength</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStrengthBadge(result.impact_summary.scenario_strength)}`}>
+
+                  <div className="p-5 bg-white rounded-2xl border border-border shadow-sm flex flex-col justify-between items-start">
+                    <p className="text-xs font-bold uppercase tracking-wider text-ink-500 mb-2">Confidence Signal</p>
+                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold tracking-wide shadow-sm ${getStrengthBadge(result.impact_summary.scenario_strength)}`}>
                       {result.impact_summary.scenario_strength.toUpperCase()}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Daily Forecast Delta */}
-              <div className="card p-6">
-                <h3 className="text-base font-bold text-ink-900 mb-4">Daily Forecast Comparison</h3>
-                <div className="space-y-2">
-                  {result.forecast_delta.map((day) => {
-                    const maxVisits = Math.max(...result.forecast_delta.map(d => Math.max(d.baseline_visits, d.scenario_visits)));
-                    const baselineWidth = (day.baseline_visits / maxVisits) * 100;
-                    const scenarioWidth = (day.scenario_visits / maxVisits) * 100;
+              {/* Calendar Heatmap for Daily Delta */}
+              <div className="card p-8 border-transparent shadow-lg bg-white">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-ink-900 tracking-tight">Timeline Heatmap</h3>
+                    <p className="text-sm text-ink-500 mt-1">Intensity implies deviation from baseline</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs font-bold text-ink-500 uppercase tracking-wider bg-surface-50 px-3 py-2 rounded-lg">
+                    <span>Loss</span>
+                    <div className="w-24 h-2 rounded-full bg-gradient-to-r from-red-500 via-surface-200 to-green-500"></div>
+                    <span>Gain</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
+                  {result.forecast_delta.map((day, i) => {
+                    const isGain = day.delta >= 0;
+                    const intensity = Math.min(Math.abs(day.delta_pct) / 30, 1); // Max intensity at 30% diff
+
+                    // Generate dynamic background based on intensity
+                    const bgClass = isGain
+                      ? `rgba(34, 197, 94, ${0.1 + (intensity * 0.9)})` // Green scale
+                      : `rgba(239, 68, 68, ${0.1 + (intensity * 0.9)})`; // Red scale
+
+                    const textClass = intensity > 0.4 ? 'text-white' : 'text-ink-900';
+                    const subtextClass = intensity > 0.4 ? 'text-white/80' : 'text-ink-500';
 
                     return (
-                      <div key={day.date} className="grid grid-cols-12 gap-3 items-center">
-                        <div className="col-span-2 text-sm text-ink-700">
-                          {new Date(day.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-                        </div>
-                        <div className="col-span-8 space-y-1">
-                          <div className="relative h-4 bg-surface-100 rounded">
-                            <div
-                              className="absolute top-0 left-0 h-full bg-ink-300 rounded"
-                              style={{ width: `${baselineWidth}%` }}
-                            />
-                          </div>
-                          <div className="relative h-4 bg-surface-100 rounded">
-                            <div
-                              className={`absolute top-0 left-0 h-full rounded ${day.delta >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                              style={{ width: `${scenarioWidth}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-span-2 text-right">
-                          <span className={`text-sm font-semibold ${day.delta_pct >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                            {day.delta_pct > 0 ? '+' : ''}{day.delta_pct.toFixed(1)}%
+                      <div
+                        key={day.date}
+                        className="relative p-4 rounded-xl flex flex-col justify-between h-28 transform hover:scale-105 transition-transform cursor-default shadow-sm border border-border/30"
+                        style={{ backgroundColor: bgClass }}
+                      >
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${subtextClass}`}>
+                            {new Date(day.date).toLocaleDateString('en-IN', { weekday: 'short' })}
                           </span>
+                          <span className={`text-[10px] font-bold ${subtextClass}`}>
+                            {new Date(day.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+
+                        <div className="mt-auto">
+                          <div className={`text-2xl font-black tracking-tighter ${textClass}`}>
+                            {isGain ? '+' : ''}{Math.round(day.delta)}
+                          </div>
+                          <div className={`text-xs font-bold ${subtextClass}`}>
+                            ({isGain ? '+' : ''}{day.delta_pct.toFixed(1)}%)
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="mt-4 pt-4 border-t flex items-center justify-center gap-6 text-xs text-ink-600">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-ink-300 rounded"></div>
-                    <span>Baseline</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded"></div>
-                    <span>Scenario (Gain)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded"></div>
-                    <span>Scenario (Loss)</span>
-                  </div>
-                </div>
               </div>
 
-              {/* Staffing & Inventory Impact */}
+              {/* Actionable Insights */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {Object.keys(result.staffing_impact).length > 0 && (
-                  <div className="card p-6">
-                    <h3 className="text-base font-bold text-ink-900 mb-4">Staffing Impact</h3>
+                {/* Staffing */}
+                <div className="card p-6 border-transparent shadow-lg bg-gradient-to-br from-white to-blue-50/30">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2.5 bg-blue-100 rounded-xl">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-ink-900 leading-tight">Staffing Adjustments</h3>
+                      <p className="text-xs text-ink-500">Peak shift coverage recommendations</p>
+                    </div>
+                  </div>
+
+                  {Object.keys(result.staffing_impact).length > 0 ? (
                     <div className="space-y-3">
                       {Object.entries(result.staffing_impact).map(([role, delta]) => (
-                        <div key={role} className="flex items-center justify-between p-3 bg-surface-50 rounded-lg">
-                          <span className="text-sm font-medium text-ink-700 capitalize">{role.replace('_', ' ')}</span>
-                          <span className={`text-sm font-bold ${delta >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                            {delta > 0 ? '+' : ''}{delta} staff
+                        <div key={role} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-border/50 hover:border-blue-200 transition-colors">
+                          <span className="text-sm font-bold text-ink-800 capitalize flex items-center gap-2">
+                            {role.replace('_', ' ')}
+                            {delta > 0 ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Needs Cover</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">Overscheduled</span>
+                            )}
                           </span>
+                          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg ${delta >= 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                            <span className="text-sm font-black">{delta > 0 ? '+' : ''}{delta}</span>
+                            <span className="text-xs font-semibold opacity-80">Shifts</span>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="p-6 bg-surface-50 rounded-xl border border-dashed border-border text-center">
+                      <p className="text-sm text-ink-600 font-medium">No significant staffing changes required.</p>
+                      <p className="text-xs text-ink-400 mt-1">Current team can absorb the variance.</p>
+                    </div>
+                  )}
+                </div>
 
-                {result.inventory_impact.length > 0 && (
-                  <div className="card p-6">
-                    <h3 className="text-base font-bold text-ink-900 mb-4">Inventory Impact</h3>
+                {/* Inventory */}
+                <div className="card p-6 border-transparent shadow-lg bg-gradient-to-br from-white to-amber-50/30">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2.5 bg-amber-100 rounded-xl">
+                      <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-ink-900 leading-tight">Inventory Risk Profile</h3>
+                      <p className="text-xs text-ink-500">Top SKUs affected by this scenario</p>
+                    </div>
+                  </div>
+
+                  {result.inventory_impact.length > 0 ? (
                     <div className="space-y-3">
                       {result.inventory_impact.slice(0, 5).map((item, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 bg-surface-50 rounded-lg">
-                          <span className="text-sm font-medium text-ink-700">{item.name || item.sku}</span>
-                          <span className={`text-sm font-bold ${item.delta >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                            {item.delta > 0 ? '+' : ''}{item.delta} units
-                          </span>
+                        <div key={i} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-border/50 hover:border-amber-200 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-8 rounded-full ${Math.abs(item.delta) > 50 ? 'bg-red-500' : 'bg-amber-400'}`}></div>
+                            <div>
+                              <p className="text-sm font-bold text-ink-800 line-clamp-1">{item.name || item.sku}</p>
+                              {item.delta > 0 ? (
+                                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-0.5">High Demand Risk</p>
+                              ) : (
+                                <p className="text-[10px] font-bold text-ink-500 uppercase tracking-widest mt-0.5">Surplus Warning</p>
+                              )}
+                            </div>
+                          </div>
+                          <p className={`text-base font-black ${item.delta >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                            {item.delta > 0 ? '+' : ''}{item.delta}
+                          </p>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="p-6 bg-surface-50 rounded-xl border border-dashed border-border text-center">
+                      <p className="text-sm text-ink-600 font-medium">Standard inventory levels sufficient.</p>
+                      <p className="text-xs text-ink-400 mt-1">Impact falls within normal operating buffers.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}

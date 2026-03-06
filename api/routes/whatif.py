@@ -125,6 +125,12 @@ async def analyze_scenarios(request: WhatIfRequest) -> Dict[str, List[ScenarioRe
     # staffing needs, and what products to stock.
 
     try:
+        if request.mode != "pro":
+            raise HTTPException(
+                status_code=403,
+                detail="What-If Planner requires the Pro forecasting model to run."
+            )
+
         baseline_date = request.baseline_date or (date.today() + timedelta(days=1))
         horizon_days = request.horizon_days
         mode = request.mode
@@ -187,19 +193,29 @@ async def analyze_scenarios(request: WhatIfRequest) -> Dict[str, List[ScenarioRe
             impact_summary = {
                 "avg_visit_delta_pct": round(avg_delta_pct, 1),
                 "total_visit_delta": int(total_delta),
-                "max_daily_impact": max(abs(d["delta"]) for d in forecast_deltas),
+                "max_daily_impact": max((abs(d["delta"]) for d in forecast_deltas), default=0),
                 "scenario_strength": "high" if abs(avg_delta_pct) > 15 else "medium" if abs(avg_delta_pct) > 5 else "low"
             }
 
-            # Calculate staffing impact (simplified)
-            staffing_impact = {}
-            if abs(avg_delta_pct) > 5:  # Only if significant impact
-                roles = ["cashier", "floor_staff", "manager"]
-                for role in roles:
-                    # Scale staffing based on visit delta
-                    staffing_impact[role] = int(total_delta / 100)  # Rough heuristic
+            # Calculate staffing impact accurately using the real forecast ML thresholds
+            baseline_staffing = forecast_service._calculate_staffing_needs(baseline_forecast["predictions"][:actual_horizon])
+            scenario_staffing = forecast_service._calculate_staffing_needs(scenario_forecast["predictions"][:actual_horizon])
 
-            inventory_impact = InventoryRepository.estimate_impact(total_delta)
+            staffing_impact = {}
+            for i in range(actual_horizon):
+                base_roles = baseline_staffing[i].get("role_breakdown", {})
+                scen_roles = scenario_staffing[i].get("role_breakdown", {})
+                
+                all_roles = set(base_roles.keys()) | set(scen_roles.keys())
+                for role in all_roles:
+                    diff = scen_roles.get(role, 0) - base_roles.get(role, 0)
+                    if diff != 0:
+                        # Use peak difference across the horizon
+                        current_peak = staffing_impact.get(role, 0)
+                        if abs(diff) > abs(current_peak):
+                            staffing_impact[role] = diff
+
+            inventory_impact = InventoryRepository.estimate_impact(total_delta, top_n=5)
 
             results.append(ScenarioResult(
                 scenario_name=scenario.name,
@@ -231,6 +247,12 @@ async def save_scenario(request: ScenarioSaveRequest) -> Dict[str, str]:
     # like keeping a notebook of all the different scenarios you've tested.
 
     try:
+        if request.mode != "pro":
+            raise HTTPException(
+                status_code=403,
+                detail="What-If Planner requires the Pro forecasting model to run."
+            )
+
         scenario_name = request.scenario_name.strip()
         if not scenario_name:
             raise HTTPException(
@@ -352,6 +374,18 @@ async def get_quick_scenarios() -> Dict[str, List[ScenarioConfig]]:
             name="Price Increase",
             description="10% price increase across key categories",
             price_sensitivity=-0.1,  # 10% decrease expected
+        ),
+        ScenarioConfig(
+            name="Local Event/Concert",
+            description="Major event nearby driving foot traffic",
+            promo_boost=0.35,  # 35% increase expected
+            weather_impact="sunny"
+        ),
+        ScenarioConfig(
+            name="Supply Chain Delay",
+            description="Severe stockouts limiting sales capacity",
+            price_sensitivity=-0.25, # Proxy for reduced sales
+            competitor_action="new_store" # Proxy for lost customers
         )
     ]
 

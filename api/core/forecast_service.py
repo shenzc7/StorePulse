@@ -785,7 +785,10 @@ class ForecastService:
             
             recommended_staff = base_staff + safety_buffer
             
-            if pred["is_high_traffic"] or pred["is_weekend"]:
+            is_high_traffic = pred.get("is_high_traffic", mean_visits > high_traffic_thresh)
+            is_weekend = pred.get("is_weekend", False)
+            
+            if is_high_traffic or is_weekend:
                 recommended_staff = max(recommended_staff, 2) # Minimum of 2 for peak/busy times
 
             # Dynamic role assignment based on total count
@@ -833,12 +836,15 @@ class ForecastService:
             upper = pred["upper_bound"]
             estimated_sales = round(visits * conv_rate)
             upper_sales = round(upper * conv_rate)
+            
+            is_weekend = pred.get("is_weekend", False)
+            is_payday = pred.get("is_payday", False)
 
             # Risk level depends on upper bound - better to be safe
             risk_level = "low"
-            if upper > high_risk_thresh or pred["is_payday"]:
+            if upper > high_risk_thresh or is_payday:
                 risk_level = "high"
-            elif upper > med_risk_thresh or pred["is_weekend"]:
+            elif upper > med_risk_thresh or is_weekend:
                 risk_level = "medium"
 
             # Alert logic that reflects ML uncertainty
@@ -848,9 +854,9 @@ class ForecastService:
                 "upper_sales_potential": upper_sales,
                 "inventory_priorities": {
                     "groceries_staples": "urgent_restock" if upper_sales > 35 else ("restock" if estimated_sales > 25 else "monitor"),
-                    "snacks_beverages": "stock_up" if pred["is_weekend"] or pred["is_payday"] else ("monitor" if estimated_sales > 15 else "normal"),
+                    "snacks_beverages": "stock_up" if is_weekend or is_payday else ("monitor" if estimated_sales > 15 else "normal"),
                     "personal_care": "shelf_audit" if upper_sales > 20 else "normal",
-                    "fresh_produce": "order_extra" if pred["is_weekend"] and upper_sales > 30 else "normal"
+                    "fresh_produce": "order_extra" if is_weekend and upper_sales > 30 else "normal"
                 },
                 "stockout_risk": risk_level,
                 "reasoning": f"Based on upper-bound demand of {upper:.0f} customers (+{(upper-visits)/visits*100:.0f}% variance)"
