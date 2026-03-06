@@ -187,11 +187,11 @@ export function LabPage() {
         {quickScenarios.map((scenario, index) => (
           <div
             key={index}
-            className="group relative bg-white border border-border/80 rounded-2xl p-6 hover:border-ink-300 hover:shadow-xl hover:shadow-ink-900/5 transition-all cursor-pointer overflow-hidden flex flex-col"
+            className="group relative bg-white border border-border/80 rounded-2xl p-6 hover:border-ink-300 hover:shadow-xl hover:shadow-ink-900/5 transition-all cursor-pointer flex flex-col hover:-translate-y-1"
             onClick={() => analyzeScenario(scenario)}
           >
             {/* Background accent on hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-surface-50/0 to-surface-50/0 group-hover:from-surface-50 group-hover:to-white transition-colors duration-500" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-surface-50/0 to-surface-50/0 group-hover:from-surface-50 group-hover:to-white transition-colors duration-500 -z-10" />
 
             <div className="relative z-10 flex-1">
               <div className="flex items-center justify-between mb-4">
